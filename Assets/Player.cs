@@ -10,6 +10,9 @@ public class Player : MonoBehaviour
     private static Player[] players;
     private static bool playersInitialized = false;
 
+    // Public getter for camera to access active player
+    public static Player GetActivePlayer() => activePlayer;
+
     private Rigidbody rb;
 
     void Awake()
@@ -84,8 +87,6 @@ public class Player : MonoBehaviour
                 Debug.LogError($"{name}: Rigidbody is null!");
                 return;
             }
-            
-            // rb.WakeUp(); // Wake up Rigidbody if sleeping - testing if needed
             
             Vector3 force = moveDirection * moveSpeed * 10f; // Increase force to overcome friction
             Vector3 posBefore = transform.position;
