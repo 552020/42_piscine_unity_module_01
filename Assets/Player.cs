@@ -5,6 +5,9 @@ public class Player : MonoBehaviour
 {
     public int playerNumber = 1;      // 1, 2, or 3 in the Inspector
     public float moveSpeed = 5f;      // Movement speed
+    public float jumpForce = 7f;      // Jump force
+    public LayerMask groundMask = -1; // Layers that count as ground (-1 = everything)
+    public float groundCheckDistance = 0.6f; // Distance to check for ground
 
     private static Player activePlayer = null;
     private static Player[] players;
@@ -14,6 +17,10 @@ public class Player : MonoBehaviour
     public static Player GetActivePlayer() => activePlayer;
 
     private Rigidbody rb;
+    private bool isGrounded = false;
+    private bool wantJump = false;
+    private Vector3 initialPosition;
+    private Quaternion initialRotation;
 
     void Awake()
     {
@@ -47,6 +54,10 @@ public class Player : MonoBehaviour
 
         Debug.Log($"Start() called for {name} (Player {playerNumber})");
         
+        // Store initial position and rotation for reset
+        initialPosition = transform.position;
+        initialRotation = transform.rotation;
+        
         activePlayer = null;          // start with no active player
     }
 
@@ -68,12 +79,53 @@ public class Player : MonoBehaviour
             Debug.Log("Switching to player 3...");
             SetActivePlayer(3);
         }
+
+        // Handle jump input (only for active player)
+        if (this == activePlayer && Input.GetKeyDown(KeyCode.Space))
+        {
+            wantJump = true;
+        }
+
+        // Handle scene reset (R or Backspace)
+        if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Backspace))
+        {
+            ResetAllPlayers();
+        }
     }
 
     void FixedUpdate()
     {
-        // Only move if this is the active player
+        // Ground check (for all players) - accounts for cube size
+        int mask = groundMask.value == 0 ? ~0 : groundMask.value;
+        
+        // Get collider to determine cube size
+        Collider col = GetComponent<Collider>();
+        float checkDistance = groundCheckDistance;
+        
+        if (col != null)
+        {
+            // Calculate distance from center to bottom of cube
+            float bottomOffset = col.bounds.extents.y;
+            // Cast from just above the bottom of the cube
+            Vector3 rayOrigin = transform.position - Vector3.up * (bottomOffset - 0.1f);
+            checkDistance = groundCheckDistance + 0.1f;
+            isGrounded = Physics.Raycast(rayOrigin, Vector3.down, checkDistance, mask);
+        }
+        else
+        {
+            // Fallback to simple raycast if no collider
+            isGrounded = Physics.Raycast(transform.position, Vector3.down, checkDistance, mask);
+        }
+
+        // Only handle movement/jump if this is the active player
         if (activePlayer != this) return;
+
+        // Handle jump (only if grounded)
+        if (wantJump && isGrounded)
+        {
+            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+        }
+        wantJump = false;
 
         // Handle horizontal movement (A/D, arrows, or gamepad)
         float horizontal = Input.GetAxisRaw("Horizontal");
@@ -114,5 +166,32 @@ public class Player : MonoBehaviour
             }
         }
         Debug.LogWarning($"Player {number} not found! Make sure playerNumber is set correctly in Inspector.");
+    }
+
+    public static void ResetAllPlayers()
+    {
+        if (players == null) return;
+
+        foreach (var p in players)
+        {
+            if (p != null && p.rb != null)
+            {
+                // Reset position and rotation
+                p.transform.position = p.initialPosition;
+                p.transform.rotation = p.initialRotation;
+                
+                // Stop all movement
+                p.rb.linearVelocity = Vector3.zero;
+                p.rb.angularVelocity = Vector3.zero;
+                
+                // Reset jump flag
+                p.wantJump = false;
+            }
+        }
+        
+        // Reset active player selection
+        activePlayer = null;
+        
+        Debug.Log("Scene reset: All players returned to initial positions");
     }
 }
