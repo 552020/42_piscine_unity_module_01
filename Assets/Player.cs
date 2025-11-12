@@ -205,6 +205,9 @@ public class Player : MonoBehaviour
         // Reset active player selection
         activePlayer = null;
         
+        // Reset exit completion flags
+        ExitFrame.ResetCompletionFlag();
+        
         Debug.Log("Scene reset: All players returned to initial positions");
     }
 }

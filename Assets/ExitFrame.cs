@@ -167,6 +167,17 @@ public class ExitFrame : MonoBehaviour
         {
             isPlayerInside = true;
             Debug.Log($"{targetPlayer.name} entered their exit frame");
+        }
+    }
+
+    void OnTriggerStay(Collider other)
+    {
+        Player player = other.GetComponent<Player>();
+        if (player != null && player == targetPlayer)
+        {
+            // Continuously verify player is still inside
+            isPlayerInside = true;
+            // Check if all exits are complete
             CheckAllExitsComplete();
         }
     }
@@ -178,6 +189,23 @@ public class ExitFrame : MonoBehaviour
         {
             isPlayerInside = false;
             Debug.Log($"{targetPlayer.name} left their exit frame");
+        }
+    }
+
+    private static bool stageCompleteMessageShown = false;
+
+    public static void ResetCompletionFlag()
+    {
+        stageCompleteMessageShown = false;
+        if (allExits != null)
+        {
+            foreach (var exit in allExits)
+            {
+                if (exit != null)
+                {
+                    exit.isPlayerInside = false;
+                }
+            }
         }
     }
 
@@ -195,9 +223,15 @@ public class ExitFrame : MonoBehaviour
             }
         }
 
-        if (allComplete)
+        if (allComplete && !stageCompleteMessageShown)
         {
+            stageCompleteMessageShown = true;
             Debug.Log("STAGE COMPLETE! All characters are aligned with their exits!");
+        }
+        else if (!allComplete && stageCompleteMessageShown)
+        {
+            // Reset flag if someone leaves
+            stageCompleteMessageShown = false;
         }
     }
 }
