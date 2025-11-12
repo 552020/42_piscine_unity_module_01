@@ -67,5 +67,10 @@
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "UnityModule01.slnx"
+    "dotnet.defaultSolution": "UnityModule01.slnx",
+    "workbench.colorCustomizations": {
+        "activityBar.background": "#20312A",
+        "titleBar.activeBackground": "#2D443B",
+        "titleBar.activeForeground": "#F9FBFA"
+    }
 }

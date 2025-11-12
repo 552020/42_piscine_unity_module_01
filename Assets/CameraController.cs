@@ -4,7 +4,7 @@ public class CameraController : MonoBehaviour
 {
     public Vector3 offset = new Vector3(0f, 5f, -10f);
     
-    private Player lastActivePlayer = null;
+    private MonoBehaviour lastActivePlayer = null;
 
     void Start()
     {
@@ -13,7 +13,13 @@ public class CameraController : MonoBehaviour
 
     void LateUpdate()
     {
-        Player activePlayer = Player.GetActivePlayer();
+        // Try PlayerScene2 first, then fall back to Player
+        MonoBehaviour activePlayer = PlayerScene2.GetActivePlayer();
+        if (activePlayer == null)
+        {
+            activePlayer = Player.GetActivePlayer();
+        }
+        
         if (activePlayer == null)
         {
             // Only log once when player becomes null

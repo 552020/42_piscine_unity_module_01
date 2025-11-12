@@ -1,19 +1,19 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class Player : MonoBehaviour
+public class PlayerScene2 : MonoBehaviour
 {
     public int playerNumber = 1;      // 1, 2, or 3 in the Inspector
     public float moveSpeed = 5f;      // Movement speed
     public float jumpForce = 7f;      // Jump force
     public float groundCheckDistance = 0.6f; // Distance to check for ground
 
-    private static Player activePlayer = null;
-    private static Player[] players;
+    private static PlayerScene2 activePlayer = null;
+    private static PlayerScene2[] players;
     private static bool playersInitialized = false;
 
     // Public getter for camera to access active player
-    public static Player GetActivePlayer() => activePlayer;
+    public static PlayerScene2 GetActivePlayer() => activePlayer;
 
     private Rigidbody rb;
     private bool isGrounded = false;
@@ -39,22 +39,36 @@ public class Player : MonoBehaviour
     void Start()
     {
         if (players == null)
-            players = FindObjectsByType<Player>(FindObjectsSortMode.None);
+            players = FindObjectsByType<PlayerScene2>(FindObjectsSortMode.None);
 
-        // Auto-assign player numbers 1, 2, 3
+        // Auto-assign player numbers based on GameObject name
         if (!playersInitialized && players != null)
         {
-            for (int i = 0; i < players.Length && i < 3; i++)
+            foreach (var player in players)
             {
-                players[i].playerNumber = i + 1;
+                string playerName = player.name;
+                
+                if (playerName.Contains("Claire", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    player.playerNumber = 1;
+                }
+                else if (playerName.Contains("John", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    player.playerNumber = 2;
+                }
+                else if (playerName.Contains("Thomas", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    player.playerNumber = 3;
+                }
+                else
+                {
+                    Debug.LogWarning($"{playerName}: Name doesn't contain Claire, John, or Thomas. Keeping default playerNumber = {player.playerNumber}");
+                }
             }
             playersInitialized = true;
         }
 
         Debug.Log($"Start() called for {name} (Player {playerNumber})");
-        
-        // Set the GameObject's layer based on player number
-        SetPlayerLayer();
         
         // Store initial position and rotation for reset
         initialPosition = transform.position;
@@ -105,6 +119,8 @@ public class Player : MonoBehaviour
         // Get collider to determine cube size
         Collider col = GetComponent<Collider>();
         float checkDistance = groundCheckDistance;
+        RaycastHit hit;
+        bool hitSomething = false;
         
         if (col != null)
         {
@@ -113,21 +129,44 @@ public class Player : MonoBehaviour
             // Cast from just above the bottom of the cube
             Vector3 rayOrigin = transform.position - Vector3.up * (bottomOffset - 0.1f);
             checkDistance = groundCheckDistance + 0.1f;
-            isGrounded = Physics.Raycast(rayOrigin, Vector3.down, checkDistance, mask);
+            hitSomething = Physics.Raycast(rayOrigin, Vector3.down, out hit, checkDistance, mask);
+            isGrounded = hitSomething;
         }
         else
         {
             // Fallback to simple raycast if no collider
-            isGrounded = Physics.Raycast(transform.position, Vector3.down, checkDistance, mask);
+            hitSomething = Physics.Raycast(transform.position, Vector3.down, out hit, checkDistance, mask);
+            isGrounded = hitSomething;
+        }
+        
+        // Debug ground detection for active player
+        if (activePlayer == this && Time.frameCount % 30 == 0) // Log every 30 frames to avoid spam
+        {
+            if (hitSomething)
+            {
+                Debug.Log($"{name} (Player {playerNumber}): Grounded! Hit: {hit.collider.gameObject.name} on layer {LayerMask.LayerToName(hit.collider.gameObject.layer)}, mask={mask}");
+            }
+            else
+            {
+                Debug.Log($"{name} (Player {playerNumber}): NOT grounded! Mask={mask} (should include Layer_John/Layer_Claire/Layer_Thomas + Layer_All)");
+            }
         }
 
         // Only handle movement/jump if this is the active player
         if (activePlayer != this) return;
 
         // Handle jump (only if grounded)
-        if (wantJump && isGrounded)
+        if (wantJump)
         {
-            rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+            if (isGrounded)
+            {
+                rb.AddForce(Vector3.up * jumpForce, ForceMode.Impulse);
+                Debug.Log($"{name} (Player {playerNumber}): Jumped!");
+            }
+            else
+            {
+                Debug.Log($"{name} (Player {playerNumber}): Jump blocked - not grounded! Mask={mask}");
+            }
         }
         wantJump = false;
 
@@ -158,38 +197,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void SetPlayerLayer()
-    {
-        // Set the GameObject's layer to match the player
-        string layerName = "";
-        switch (playerNumber)
-        {
-            case 1:
-                layerName = "Player_Claire";
-                break;
-            case 2:
-                layerName = "Player_John";
-                break;
-            case 3:
-                layerName = "Player_Thomas";
-                break;
-            default:
-                Debug.LogWarning($"{name}: Invalid playerNumber {playerNumber}, cannot set layer");
-                return;
-        }
-        
-        int layerIndex = LayerMask.NameToLayer(layerName);
-        if (layerIndex == -1)
-        {
-            Debug.LogError($"{name}: Layer '{layerName}' not found! Make sure the layer exists in Project Settings > Tags and Layers.");
-        }
-        else
-        {
-            gameObject.layer = layerIndex;
-            Debug.Log($"{name}: Set to layer '{layerName}' (index {layerIndex})");
-        }
-    }
-
     private int GetGroundLayerMask()
     {
         // Player 1 (Claire) -> Layer_Claire + Layer_All
@@ -213,7 +220,15 @@ public class Player : MonoBehaviour
         }
         
         // Combine the player's specific layer with Layer_All
-        return LayerMask.GetMask(playerLayerName, "Layer_All");
+        int mask = LayerMask.GetMask(playerLayerName, "Layer_All");
+        
+        // Debug: Log the mask value once at Start
+        if (Time.frameCount < 5) // Only log in first few frames
+        {
+            Debug.Log($"{name} (Player {playerNumber}): Ground mask = {mask}, looking for layers: {playerLayerName} + Layer_All");
+        }
+        
+        return mask;
     }
 
     private static void SetActivePlayer(int number)
