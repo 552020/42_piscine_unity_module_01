@@ -86,9 +86,10 @@ public class Player : MonoBehaviour
             wantJump = true;
         }
 
-        // Handle scene reset (R or Backspace)
-        if (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Backspace))
+        // Handle scene reset (R or Backspace) - only check once per frame
+        if (players != null && players.Length > 0 && this == players[0] && (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Backspace)))
         {
+            Debug.Log("Reset key pressed!");
             ResetAllPlayers();
         }
     }
@@ -170,8 +171,14 @@ public class Player : MonoBehaviour
 
     public static void ResetAllPlayers()
     {
-        if (players == null) return;
+        if (players == null)
+        {
+            Debug.LogWarning("ResetAllPlayers: players array is null!");
+            return;
+        }
 
+        Debug.Log($"ResetAllPlayers: Resetting {players.Length} players");
+        
         foreach (var p in players)
         {
             if (p != null && p.rb != null)
@@ -186,6 +193,12 @@ public class Player : MonoBehaviour
                 
                 // Reset jump flag
                 p.wantJump = false;
+                
+                Debug.Log($"Reset {p.name} to position {p.initialPosition}");
+            }
+            else
+            {
+                Debug.LogWarning($"ResetAllPlayers: Player {p?.name} is null or has no Rigidbody!");
             }
         }
         
