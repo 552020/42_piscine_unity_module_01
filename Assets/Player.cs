@@ -6,6 +6,7 @@ public class Player : MonoBehaviour
     public int playerNumber = 1;      // 1, 2, or 3 in the Inspector
     public float moveSpeed = 5f;      // Movement speed
     public float jumpForce = 7f;      // Jump force
+    public LayerMask groundMask = -1; // Layers that count as ground (-1 = everything)
     public float groundCheckDistance = 0.6f; // Distance to check for ground
 
     private static Player activePlayer = null;
@@ -53,9 +54,6 @@ public class Player : MonoBehaviour
 
         Debug.Log($"Start() called for {name} (Player {playerNumber})");
         
-        // Set the GameObject's layer based on player number
-        SetPlayerLayer();
-        
         // Store initial position and rotation for reset
         initialPosition = transform.position;
         initialRotation = transform.rotation;
@@ -99,8 +97,7 @@ public class Player : MonoBehaviour
     void FixedUpdate()
     {
         // Ground check (for all players) - accounts for cube size
-        // Each player only detects ground on their specific layer and Layer_All
-        int mask = GetGroundLayerMask();
+        int mask = groundMask.value == 0 ? ~0 : groundMask.value;
         
         // Get collider to determine cube size
         Collider col = GetComponent<Collider>();
@@ -156,64 +153,6 @@ public class Player : MonoBehaviour
             
             Debug.Log($"{name} moving: horizontal={horizontal}, force={force}, posBefore={posBefore}, velBefore={velBefore}, velAfter={rb.linearVelocity}");
         }
-    }
-
-    private void SetPlayerLayer()
-    {
-        // Set the GameObject's layer to match the player
-        string layerName = "";
-        switch (playerNumber)
-        {
-            case 1:
-                layerName = "Player_Claire";
-                break;
-            case 2:
-                layerName = "Player_John";
-                break;
-            case 3:
-                layerName = "Player_Thomas";
-                break;
-            default:
-                Debug.LogWarning($"{name}: Invalid playerNumber {playerNumber}, cannot set layer");
-                return;
-        }
-        
-        int layerIndex = LayerMask.NameToLayer(layerName);
-        if (layerIndex == -1)
-        {
-            Debug.LogError($"{name}: Layer '{layerName}' not found! Make sure the layer exists in Project Settings > Tags and Layers.");
-        }
-        else
-        {
-            gameObject.layer = layerIndex;
-            Debug.Log($"{name}: Set to layer '{layerName}' (index {layerIndex})");
-        }
-    }
-
-    private int GetGroundLayerMask()
-    {
-        // Player 1 (Claire) -> Layer_Claire + Layer_All
-        // Player 2 (John) -> Layer_John + Layer_All
-        // Player 3 (Thomas) -> Layer_Thomas + Layer_All
-        string playerLayerName = "";
-        switch (playerNumber)
-        {
-            case 1:
-                playerLayerName = "Layer_Claire";
-                break;
-            case 2:
-                playerLayerName = "Layer_John";
-                break;
-            case 3:
-                playerLayerName = "Layer_Thomas";
-                break;
-            default:
-                Debug.LogWarning($"{name}: Invalid playerNumber {playerNumber}, defaulting to Layer_All only");
-                return LayerMask.GetMask("Layer_All");
-        }
-        
-        // Combine the player's specific layer with Layer_All
-        return LayerMask.GetMask(playerLayerName, "Layer_All");
     }
 
     private static void SetActivePlayer(int number)

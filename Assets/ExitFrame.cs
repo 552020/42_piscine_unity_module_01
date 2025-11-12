@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 [ExecuteAlways]
 [RequireComponent(typeof(BoxCollider))]
@@ -7,7 +8,7 @@ public class ExitFrame : MonoBehaviour
 {
     public Vector2 size = new Vector2(1f, 1f);   // width, height (used if targetPlayer is null)
     public float padding = 1.5f;                  // padding around player size (larger = easier to fit)
-    public Player targetPlayer;                   // Player to match size with
+    public MonoBehaviour targetPlayer;             // Player or PlayerScene2 to match size with
     public float lineWidth = 0.05f;
     public Color color = Color.white;
 
@@ -162,7 +163,9 @@ public class ExitFrame : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        Player player = other.GetComponent<Player>();
+        // Check for both Player and PlayerScene2
+        MonoBehaviour player = other.GetComponent<Player>() as MonoBehaviour ?? 
+                               other.GetComponent<PlayerScene2>() as MonoBehaviour;
         if (player != null && player == targetPlayer)
         {
             isPlayerInside = true;
@@ -172,7 +175,9 @@ public class ExitFrame : MonoBehaviour
 
     void OnTriggerStay(Collider other)
     {
-        Player player = other.GetComponent<Player>();
+        // Check for both Player and PlayerScene2
+        MonoBehaviour player = other.GetComponent<Player>() as MonoBehaviour ?? 
+                               other.GetComponent<PlayerScene2>() as MonoBehaviour;
         if (player != null && player == targetPlayer)
         {
             // Continuously verify player is still inside
@@ -184,7 +189,9 @@ public class ExitFrame : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        Player player = other.GetComponent<Player>();
+        // Check for both Player and PlayerScene2
+        MonoBehaviour player = other.GetComponent<Player>() as MonoBehaviour ?? 
+                               other.GetComponent<PlayerScene2>() as MonoBehaviour;
         if (player != null && player == targetPlayer)
         {
             isPlayerInside = false;
@@ -227,6 +234,9 @@ public class ExitFrame : MonoBehaviour
         {
             stageCompleteMessageShown = true;
             Debug.Log("STAGE COMPLETE! All characters are aligned with their exits!");
+            
+            // Load next scene
+            GameUtils.LoadNextScene();
         }
         else if (!allComplete && stageCompleteMessageShown)
         {
@@ -234,4 +244,5 @@ public class ExitFrame : MonoBehaviour
             stageCompleteMessageShown = false;
         }
     }
+
 }
