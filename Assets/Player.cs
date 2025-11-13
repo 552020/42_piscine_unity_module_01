@@ -8,6 +8,20 @@ public class Player : MonoBehaviour
     public float jumpForce = 7f;      // Jump force
     public LayerMask groundMask = -1; // Layers that count as ground (-1 = everything)
     public float groundCheckDistance = 0.6f; // Distance to check for ground
+    
+    [Header("Start Position")]
+    /// <summary>
+    /// Optional start position GameObject. If assigned, the player will spawn at this GameObject's position,
+    /// slightly above it in the Y axis (by startPositionYOffset). Drag a GameObject from the Hierarchy here.
+    /// If not assigned, player uses its current position in the scene.
+    /// </summary>
+    public Transform startPosition;
+    
+    /// <summary>
+    /// Y offset above the start position GameObject. Player will spawn at startPosition's Y + this value.
+    /// Default is 1.0 (spawns 1 unit above the start position).
+    /// </summary>
+    public float startPositionYOffset = 1.0f;
 
     private static Player activePlayer = null;
     private static Player[] players;
@@ -53,6 +67,17 @@ public class Player : MonoBehaviour
         }
 
         Debug.Log($"Start() called for {name} (Player {playerNumber})");
+        
+        // If start position is assigned, move player there (slightly above in Y)
+        if (startPosition != null)
+        {
+            Vector3 startPos = startPosition.position;
+            startPos.y += startPositionYOffset;
+            transform.position = startPos;
+            // Reset rotation to identity (upright, no rotation) when using start position
+            transform.rotation = Quaternion.identity;
+            Debug.Log($"{name} positioned at start position: {startPos} (above '{startPosition.name}')");
+        }
         
         // Store initial position and rotation for reset
         initialPosition = transform.position;
@@ -130,29 +155,43 @@ public class Player : MonoBehaviour
 
         // Handle horizontal movement (A/D, arrows, or gamepad)
         float horizontal = Input.GetAxisRaw("Horizontal");
-        Vector3 moveDirection = new Vector3(horizontal, 0f, 0f);
-
-        // Apply movement force
-        if (moveDirection != Vector3.zero)
+        
+        // ============================================================================
+        // IMPORTANT: Direct Velocity Control for Platformer Movement
+        // ============================================================================
+        // We use direct velocity control (setting rb.linearVelocity directly) instead
+        // of AddForce() because:
+        // 
+        // 1. IMMEDIATE RESPONSIVENESS: Platformers require instant, precise control.
+        //    Players expect the character to move immediately when pressing keys and
+        //    stop immediately when releasing them. AddForce() creates acceleration
+        //    which feels sluggish and unresponsive.
+        //
+        // 2. PREVENTS SLIDING: When using AddForce(), if we only apply force when
+        //    there's input, the player continues sliding due to inertia when input
+        //    stops. By always setting velocity (including zero when no input), we
+        //    ensure the player stops immediately when keys are released.
+        //
+        // 3. CONSISTENT BEHAVIOR: Direct velocity control gives predictable, frame-
+        //    independent movement speed that matches the moveSpeed value exactly,
+        //    regardless of physics timestep or frame rate.
+        //
+        // 4. STANDARD PRACTICE: This is the most common approach in platformer games
+        //    (Mario, Celeste, Hollow Knight, etc.) because it provides the tight,
+        //    responsive controls players expect.
+        //
+        // We preserve the Y velocity (for jumping/falling) and Z velocity (if any),
+        // but always control X velocity directly based on input.
+        // ============================================================================
+        
+        if (rb == null)
         {
-            if (rb == null)
-            {
-                Debug.LogError($"{name}: Rigidbody is null!");
-                return;
-            }
-            
-            Vector3 force = moveDirection * moveSpeed * 10f; // Increase force to overcome friction
-            Vector3 posBefore = transform.position;
-            Vector3 velBefore = rb.linearVelocity;
-            
-            // Try direct velocity change instead of force
-            // rb.linearVelocity = new Vector3(horizontal * moveSpeed, rb.linearVelocity.y, rb.linearVelocity.z);
-            
-            // Try AddForce with higher force
-            rb.AddForce(force, ForceMode.Acceleration);
-            
-            Debug.Log($"{name} moving: horizontal={horizontal}, force={force}, posBefore={posBefore}, velBefore={velBefore}, velAfter={rb.linearVelocity}");
+            Debug.LogError($"{name}: Rigidbody is null!");
+            return;
         }
+        
+        // Always set horizontal velocity directly (even when input is zero to stop sliding)
+        rb.linearVelocity = new Vector3(horizontal * moveSpeed, rb.linearVelocity.y, rb.linearVelocity.z);
     }
 
     private static void SetActivePlayer(int number)
