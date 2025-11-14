@@ -74,6 +74,12 @@ public class ButtonCollider : MonoBehaviour
     /// Higher values = faster animation. Default is 2 units per second.
     /// </summary>
     [SerializeField] private float sinkSpeed = 2f;
+    
+    /// <summary>
+    /// Reference to the Doors system. Assign in Inspector.
+    /// When button sinks, this will be used to open the matching door.
+    /// </summary>
+    [SerializeField] private Doors doors;
 
     void Start()
     {
@@ -509,6 +515,42 @@ public class ButtonCollider : MonoBehaviour
         
         // Log state just after exiting SinkTrigger
         Debug.Log($"[ButtonCollider] SinkTrigger: Exited. Players on button: {playersOnButton.Count}, isSinking: {isSinking}, isRising: {isRising}, grace period started");
+        
+        // ============================================================================
+        // Open the matching door when button sinking completes
+        // ============================================================================
+        if (doors != null && playersOnButton.Count > 0)
+        {
+            // Get the first player on the button (there should be at least one when sinking completes)
+            Player player = null;
+            foreach (Player p in playersOnButton)
+            {
+                player = p;
+                break; // Get first player
+            }
+            
+            if (player != null)
+            {
+                string playerName = player.name;
+                Debug.Log($"[ButtonCollider] Button sinking completed. Opening door for player: {playerName}");
+                doors.OpenDoor(playerName);
+            }
+            else
+            {
+                Debug.LogWarning("[ButtonCollider] Could not get player from playersOnButton!");
+            }
+        }
+        else
+        {
+            if (doors == null)
+            {
+                Debug.LogWarning("[ButtonCollider] Doors reference is null! Cannot open door. Assign Doors in Inspector.");
+            }
+            if (playersOnButton.Count == 0)
+            {
+                Debug.LogWarning("[ButtonCollider] No players on button! Cannot determine which door to open.");
+            }
+        }
     }
     
     /// <summary>
