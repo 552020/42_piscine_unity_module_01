@@ -39,35 +39,34 @@ public class CameraController : MonoBehaviour
                 Vector3 startPos = startObj.transform.position;
                 Vector3 exitPos = exitObj.transform.position;
                 
-                // Calculate center X of the path
-                float pathCenterX = (startPos.x + exitPos.x) / 2f;
+                // Calculate path length along X-axis
+                float pathLength = Mathf.Abs(exitPos.x - startPos.x);
                 
                 // Use average Y of Start and Exit, elevated
                 float pathAvgY = (startPos.y + exitPos.y) / 2f;
                 
-                // Calculate path length along X-axis
-                float pathLength = Mathf.Abs(exitPos.x - startPos.x);
-                
-                // Calculate Z distance needed to see the whole path
+                // Calculate Y distance needed to see the whole path (top-bottom in view)
                 // Use field of view to calculate required distance
                 Camera pathCam = GetComponent<Camera>();
                 float pathFov = pathCam != null ? pathCam.fieldOfView : 60f;
                 float pathHalfFovRad = (pathFov * 0.5f) * Mathf.Deg2Rad;
                 // Distance = (pathLength / 2) / tan(halfFov)
                 // Add some padding (multiply by 1.2 for extra space)
-                float pathZDistance = (pathLength * 0.5f / Mathf.Tan(pathHalfFovRad)) * 1.2f;
+                float pathYDistance = (pathLength * 0.5f / Mathf.Tan(pathHalfFovRad)) * 1.2f;
                 // Ensure minimum distance
-                pathZDistance = Mathf.Max(pathZDistance, 20f);
+                pathYDistance = Mathf.Max(pathYDistance, 10f);
                 
-                // Position camera at center, elevated, and far enough back
-                overviewPosition = new Vector3(pathCenterX, pathAvgY + 10f, -pathZDistance);
+                // Position camera behind Start (at Start X or slightly before), elevated to see whole path
+                float cameraX = startPos.x - 2f; // Slightly behind Start
+                float cameraY = pathAvgY + pathYDistance; // Elevated to see whole path
+                float cameraZ = pathAvgY; // Use average Y as Z offset (to the side)
                 
-                // Calculate rotation to look at the path center
-                Vector3 lookAtTarget = new Vector3(pathCenterX, pathAvgY, 0f);
-                Vector3 lookDirection = (lookAtTarget - overviewPosition).normalized;
-                overviewRotation = Quaternion.LookRotation(lookDirection);
+                overviewPosition = new Vector3(cameraX, cameraY, cameraZ);
                 
-                Debug.Log($"CameraController: Overview calculated. Path X: {startPos.x} to {exitPos.x}, Length: {pathLength}, Z Distance: {pathZDistance}");
+                // Camera should look along +X axis toward Exit
+                overviewRotation = Quaternion.LookRotation(Vector3.right);
+                
+                Debug.Log($"CameraController: Overview calculated. Camera at X: {cameraX} (behind Start), Y: {cameraY}, Z: {cameraZ}. Path X: {startPos.x} to {exitPos.x}, Length: {pathLength}, Y Distance: {pathYDistance}");
                 return;
             }
             else
