@@ -80,6 +80,12 @@ public class ButtonCollider : MonoBehaviour
     /// When button sinks, this will be used to open the matching door.
     /// </summary>
     [SerializeField] private Doors doors;
+    
+    /// <summary>
+    /// Reference to the ColPlatform. Assign in Inspector.
+    /// When button sinks, this will be used to change the platform's layer and color.
+    /// </summary>
+    [SerializeField] private ColPlatform platform;
 
     void Start()
     {
@@ -517,39 +523,51 @@ public class ButtonCollider : MonoBehaviour
         Debug.Log($"[ButtonCollider] SinkTrigger: Exited. Players on button: {playersOnButton.Count}, isSinking: {isSinking}, isRising: {isRising}, grace period started");
         
         // ============================================================================
-        // Open the matching door when button sinking completes
+        // Trigger actions when button sinking completes (doors, platform, etc.)
         // ============================================================================
-        if (doors != null && playersOnButton.Count > 0)
+        if (playersOnButton.Count == 0)
         {
-            // Get the first player on the button (there should be at least one when sinking completes)
-            Player player = null;
-            foreach (Player p in playersOnButton)
-            {
-                player = p;
-                break; // Get first player
-            }
-            
-            if (player != null)
-            {
-                string playerName = player.name;
-                Debug.Log($"[ButtonCollider] Button sinking completed. Opening door for player: {playerName}");
-                doors.OpenDoor(playerName);
-            }
-            else
-            {
-                Debug.LogWarning("[ButtonCollider] Could not get player from playersOnButton!");
-            }
+            Debug.LogWarning("[ButtonCollider] No players on button! Cannot determine which actions to trigger.");
+            yield break;
+        }
+        
+        // Get the first player on the button (there should be at least one when sinking completes)
+        Player player = null;
+        foreach (Player p in playersOnButton)
+        {
+            player = p;
+            break; // Get first player
+        }
+        
+        if (player == null)
+        {
+            Debug.LogWarning("[ButtonCollider] Could not get player from playersOnButton!");
+            yield break;
+        }
+        
+        string playerName = player.name;
+        Debug.Log($"[ButtonCollider] Button sinking completed for player: {playerName}. Triggering actions...");
+        
+        // Open the matching door if reference exists
+        if (doors != null)
+        {
+            Debug.Log($"[ButtonCollider] Opening door for player: {playerName}");
+            doors.OpenDoor(playerName);
         }
         else
         {
-            if (doors == null)
-            {
-                Debug.LogWarning("[ButtonCollider] Doors reference is null! Cannot open door. Assign Doors in Inspector.");
-            }
-            if (playersOnButton.Count == 0)
-            {
-                Debug.LogWarning("[ButtonCollider] No players on button! Cannot determine which door to open.");
-            }
+            Debug.LogWarning("[ButtonCollider] Doors reference is null! Cannot open door. Assign Doors in Inspector.");
+        }
+        
+        // Change platform layer and color if reference exists
+        if (platform != null)
+        {
+            Debug.Log($"[ButtonCollider] Changing platform layer for player: {playerName}");
+            platform.ChangeLayer(playerName);
+        }
+        else
+        {
+            Debug.LogWarning("[ButtonCollider] Platform reference is null! Cannot change platform layer. Assign ColPlatform in Inspector.");
         }
     }
     

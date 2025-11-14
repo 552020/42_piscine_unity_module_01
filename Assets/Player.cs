@@ -68,6 +68,16 @@ public class Player : MonoBehaviour
 
         Debug.Log($"Start() called for {name} (Player {playerNumber})");
         
+        // Always exclude Layer_None from groundMask if it exists
+        // This prevents players from detecting platforms on Layer_None as ground
+        int layerNone = LayerMask.NameToLayer("Layer_None");
+        if (layerNone != -1)
+        {
+            // Remove Layer_None from groundMask by using bitwise AND with inverted bit
+            groundMask = groundMask & ~(1 << layerNone);
+            Debug.Log($"[Player] {name}: Excluded Layer_None from groundMask. Layer_None index: {layerNone}");
+        }
+        
         // If start position is assigned, move player there (slightly above in Y)
         if (startPosition != null)
         {
