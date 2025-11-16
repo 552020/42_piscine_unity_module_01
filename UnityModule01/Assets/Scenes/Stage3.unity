@@ -669,8 +669,8 @@ GameObject:
   - component: {fileID: 1093800393}
   - component: {fileID: 1093800392}
   - component: {fileID: 1093800391}
-  - component: {fileID: 1093800395}
   - component: {fileID: 1093800396}
+  - component: {fileID: 1093800397}
   m_Layer: 0
   m_Name: Exit
   m_TagString: Untagged
@@ -771,18 +771,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!114 &1093800395
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1093800390}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 57a62306ca84a49f893cc0c42542e0d5, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::ExitStage3
 --- !u!65 &1093800396
 BoxCollider:
   m_ObjectHideFlags: 0
@@ -804,6 +792,18 @@ BoxCollider:
   serializedVersion: 3
   m_Size: {x: 10, y: 2.220446e-16, z: 10}
   m_Center: {x: 0, y: 0, z: 0}
+--- !u!114 &1093800397
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1093800390}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d4476c75ac46bffc5abba5658b5a75ba, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::ExitPlane
 --- !u!1001 &1169335266
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1526,7 +1526,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bccc913b972e94461a0a4e749d8d578c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraController
-  offset: {x: 0, y: 5, z: -10}
+  followOffset: {x: 0, y: 7, z: -15}
 --- !u!1 &2130171496
 GameObject:
   m_ObjectHideFlags: 0
