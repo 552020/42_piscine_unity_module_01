@@ -35,6 +35,8 @@ public class Player : MonoBehaviour
     private bool wantJump = false;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
+    private Color originalColor; // Store original color for reset
+    private static bool isGameOver = false; // Game over flag
 
     void Awake()
     {
@@ -93,11 +95,34 @@ public class Player : MonoBehaviour
         initialPosition = transform.position;
         initialRotation = transform.rotation;
         
+        // Store original color for reset
+        Renderer renderer = GetComponent<Renderer>();
+        if (renderer != null && renderer.material != null)
+        {
+            originalColor = renderer.material.color;
+        }
+        else
+        {
+            originalColor = Color.white; // Fallback
+        }
+        
         activePlayer = null;          // start with no active player
+        isGameOver = false;           // Reset game over flag
     }
 
     void Update()
     {
+        // Handle scene reset (R or Backspace) - works even when game is over
+        if (players != null && players.Length > 0 && this == players[0] && (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Backspace)))
+        {
+            Debug.Log("Reset key pressed!");
+            ResetAllPlayers();
+            return; // Don't process other input after reset
+        }
+        
+        // Don't process other input if game is over
+        if (isGameOver) return;
+        
         // Handle player switching
         if (Input.GetKeyDown(KeyCode.Alpha1))
         {
@@ -120,17 +145,13 @@ public class Player : MonoBehaviour
         {
             wantJump = true;
         }
-
-        // Handle scene reset (R or Backspace) - only check once per frame
-        if (players != null && players.Length > 0 && this == players[0] && (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Backspace)))
-        {
-            Debug.Log("Reset key pressed!");
-            ResetAllPlayers();
-        }
     }
 
     void FixedUpdate()
     {
+        // Don't process movement if game is over
+        if (isGameOver) return;
+        
         // Ground check (for all players) - accounts for cube size
         int mask = groundMask.value == 0 ? ~0 : groundMask.value;
         
@@ -218,6 +239,33 @@ public class Player : MonoBehaviour
         Debug.LogWarning($"Player {number} not found! Make sure playerNumber is set correctly in Inspector.");
     }
 
+    /// <summary>
+    /// Triggers game over. Called when a player is hit by a bullet, falls into a hole, or triggers a trap.
+    /// </summary>
+    public static void TriggerGameOver()
+    {
+        if (isGameOver)
+        {
+            return; // Already game over, don't trigger multiple times
+        }
+        
+        isGameOver = true;
+        Debug.Log("GAME OVER! Press R or Backspace to reset.");
+        
+        // Stop all player movement
+        if (players != null)
+        {
+            foreach (var p in players)
+            {
+                if (p != null && p.rb != null)
+                {
+                    p.rb.linearVelocity = Vector3.zero;
+                    p.rb.angularVelocity = Vector3.zero;
+                }
+            }
+        }
+    }
+    
     public static void ResetAllPlayers()
     {
         if (players == null)
@@ -227,6 +275,9 @@ public class Player : MonoBehaviour
         }
 
         Debug.Log($"ResetAllPlayers: Resetting {players.Length} players");
+        
+        // Reset game over flag
+        isGameOver = false;
         
         foreach (var p in players)
         {
@@ -242,6 +293,13 @@ public class Player : MonoBehaviour
                 
                 // Reset jump flag
                 p.wantJump = false;
+                
+                // Restore original color
+                Renderer renderer = p.GetComponent<Renderer>();
+                if (renderer != null && renderer.material != null)
+                {
+                    renderer.material.color = p.originalColor;
+                }
                 
                 Debug.Log($"Reset {p.name} to position {p.initialPosition}");
             }
