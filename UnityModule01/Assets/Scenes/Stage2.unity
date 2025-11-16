@@ -158,7 +158,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 6932440386604815533, guid: 3efb6f3eb4ea2427ba4248b9ed78a2d2, type: 3}
   m_PrefabInstance: {fileID: 2033333406}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &157143285
+--- !u!114 &157143279
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -167,13 +167,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 157143278}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b0d653219a0a42a8bc1677856762276, type: 3}
+  m_Script: {fileID: 11500000, guid: f7d85fce3cf504d3899a008ce1767d65, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerScene2
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   playerNumber: 1
   moveSpeed: 5
   jumpForce: 7
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   groundCheckDistance: 0.6
+  startPosition: {fileID: 0}
+  startPositionYOffset: 1
 --- !u!1 &184996062
 GameObject:
   m_ObjectHideFlags: 0
@@ -514,22 +519,6 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 5733531832561477001, guid: ea28d648ad09442ca978e290a65b5544, type: 3}
   m_PrefabInstance: {fileID: 919810025}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &469279517
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 469279510}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b0d653219a0a42a8bc1677856762276, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerScene2
-  playerNumber: 1
-  moveSpeed: 5
-  jumpForce: 7
-  groundCheckDistance: 0.6
 --- !u!114 &469279518
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -545,6 +534,27 @@ MonoBehaviour:
   _data:
     _json: '{"declarations":{"Kind":"Object","collection":{"$content":[],"$version":"A"},"$version":"A"}}'
     _objectReferences: []
+--- !u!114 &469279519
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 469279510}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7d85fce3cf504d3899a008ce1767d65, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
+  playerNumber: 1
+  moveSpeed: 5
+  jumpForce: 7
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
+  groundCheckDistance: 0.6
+  startPosition: {fileID: 0}
+  startPositionYOffset: 1
 --- !u!1 &574079554
 GameObject:
   m_ObjectHideFlags: 0
@@ -1109,7 +1119,7 @@ PrefabInstance:
       addedObject: {fileID: 469279518}
     - targetCorrespondingSourceObject: {fileID: 5733531832561477001, guid: ea28d648ad09442ca978e290a65b5544, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 469279517}
+      addedObject: {fileID: 469279519}
   m_SourcePrefab: {fileID: 100100000, guid: ea28d648ad09442ca978e290a65b5544, type: 3}
 --- !u!1 &1244092577
 GameObject:
@@ -1261,7 +1271,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: bccc913b972e94461a0a4e749d8d578c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraController
-  offset: {x: 0, y: 5, z: -10}
+  followOffset: {x: 0, y: 7, z: -15}
 --- !u!1 &1332747208
 GameObject:
   m_ObjectHideFlags: 0
@@ -1635,7 +1645,7 @@ GameObject:
   m_CorrespondingSourceObject: {fileID: 2628364778492358830, guid: 520e24ce48f2f45088c883a25b5a6de3, type: 3}
   m_PrefabInstance: {fileID: 1611245504}
   m_PrefabAsset: {fileID: 0}
---- !u!114 &1471510329
+--- !u!114 &1471510323
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -1644,13 +1654,18 @@ MonoBehaviour:
   m_GameObject: {fileID: 1471510322}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 5b0d653219a0a42a8bc1677856762276, type: 3}
+  m_Script: {fileID: 11500000, guid: f7d85fce3cf504d3899a008ce1767d65, type: 3}
   m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::PlayerScene2
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerController
   playerNumber: 1
   moveSpeed: 5
   jumpForce: 7
+  groundMask:
+    serializedVersion: 2
+    m_Bits: 4294967295
   groundCheckDistance: 0.6
+  startPosition: {fileID: 0}
+  startPositionYOffset: 1
 --- !u!1001 &1611245504
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1718,7 +1733,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 2628364778492358830, guid: 520e24ce48f2f45088c883a25b5a6de3, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 1471510329}
+      addedObject: {fileID: 1471510323}
   m_SourcePrefab: {fileID: 100100000, guid: 520e24ce48f2f45088c883a25b5a6de3, type: 3}
 --- !u!1 &1733067202
 GameObject:
@@ -1898,7 +1913,7 @@ PrefabInstance:
     m_AddedComponents:
     - targetCorrespondingSourceObject: {fileID: 6932440386604815533, guid: 3efb6f3eb4ea2427ba4248b9ed78a2d2, type: 3}
       insertIndex: -1
-      addedObject: {fileID: 157143285}
+      addedObject: {fileID: 157143279}
   m_SourcePrefab: {fileID: 100100000, guid: 3efb6f3eb4ea2427ba4248b9ed78a2d2, type: 3}
 --- !u!1001 &4052545618231790547
 PrefabInstance:

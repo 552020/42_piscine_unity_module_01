@@ -34,6 +34,16 @@ public class PlayerController : MonoBehaviour
         rb.isKinematic = false; // Ensure Rigidbody responds to physics forces
     }
 
+    void OnDestroy()
+    {
+        // Clear static references when this instance is destroyed
+        if (activePlayer == this)
+            activePlayer = null;
+        
+        // Clear the players array to force re-scan on next scene load
+        players = null;
+    }
+
     void Start()
     {
         if (players == null)
@@ -41,7 +51,10 @@ public class PlayerController : MonoBehaviour
 
         // Assign player numbers and stats based on GameObject name
         foreach (var p in players)
-            p.AssignNumberSpeedJump();
+        {
+            if (p != null) // Guard against destroyed objects
+                p.AssignNumberSpeedJump();
+        }
 
         // Build per-player ground mask (excludes other players' layers, includes own)
         BuildPerPlayerGroundMask();
@@ -96,8 +109,11 @@ public class PlayerController : MonoBehaviour
 
     private static void SetActivePlayer(int number)
     {
+        if (players == null) return;
+        
         foreach (var p in players)
         {
+            if (p == null) continue; // Skip destroyed objects
             if (p.playerNumber == number)
             {
                 activePlayer = p;
@@ -167,6 +183,8 @@ public class PlayerController : MonoBehaviour
 
     private void AssignNumberSpeedJump()
     {
+        if (this == null) return; // Guard against destroyed objects
+        
         if (name == "Thomas")
         {
             playerNumber = 1;
