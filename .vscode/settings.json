@@ -72,5 +72,23 @@
         "activityBar.background": "#20312A",
         "titleBar.activeBackground": "#2D443B",
         "titleBar.activeForeground": "#F9FBFA"
+    },
+    "terminal.integrated.env.linux": {
+        "DOTNET_ROOT": "/goinfre/slombard/.dotnet",
+        "PATH": "/goinfre/slombard/.dotnet:${env:PATH}"
+    },
+    "dotnetAcquisitionExtension.existingDotnetPath": [
+        "/goinfre/slombard/.dotnet/dotnet"
+    ],
+    "dotnetAcquisitionExtension.installPath": "/goinfre/slombard/.dotnet"
+    ,
+    "omnisharp.dotnetPath": "/goinfre/slombard/.dotnet/dotnet"
+    ,
+    "[csharp]": {
+        "editor.defaultFormatter": "ms-dotnettools.csharp",
+        "editor.formatOnSave": true,
+        "editor.codeActionsOnSave": {
+            "source.organizeImports": "explicit"
+        }
     }
 }
