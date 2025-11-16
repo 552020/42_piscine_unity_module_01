@@ -60,14 +60,14 @@
         "*.asset": "yaml",
         "*.meta": "yaml",
         "*.prefab": "yaml",
-        "*.unity": "yaml",
+        "*.unity": "yaml"
     },
     "explorer.fileNesting.enabled": true,
     "explorer.fileNesting.patterns": {
         "*.sln": "*.csproj",
         "*.slnx": "*.csproj"
     },
-    "dotnet.defaultSolution": "UnityModule01.slnx",
+    "dotnet.defaultSolution": "42_piscine_unity_module_01.slnx",
     "workbench.colorCustomizations": {
         "activityBar.background": "#20312A",
         "titleBar.activeBackground": "#2D443B",
