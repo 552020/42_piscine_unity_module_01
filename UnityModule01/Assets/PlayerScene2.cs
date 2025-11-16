@@ -25,89 +25,60 @@ public class PlayerScene2 : MonoBehaviour
     {
         rb = GetComponent<Rigidbody>();
         if (rb == null)
-        {
-            Debug.LogError($"{name}: No Rigidbody component found!");
             return;
-        }
         rb.freezeRotation = true; // Prevent tipping over
         rb.isKinematic = false; // Ensure Rigidbody responds to physics forces
-        
-        // Debug Rigidbody settings
-        Debug.Log($"{name} Rigidbody: isKinematic={rb.isKinematic}, drag={rb.linearDamping}, mass={rb.mass}, constraints={rb.constraints}");
+
     }
 
     void Start()
     {
+
         if (players == null)
             players = FindObjectsByType<PlayerScene2>(FindObjectsSortMode.None);
 
-        // Auto-assign player numbers based on GameObject name
-        if (!playersInitialized && players != null)
+        foreach (var p in players)
         {
-            foreach (var player in players)
+            if (p.name == "Thomas")
             {
-                string playerName = player.name;
-                
-                if (playerName.Contains("Claire", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    player.playerNumber = 1;
-                }
-                else if (playerName.Contains("John", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    player.playerNumber = 2;
-                }
-                else if (playerName.Contains("Thomas", System.StringComparison.OrdinalIgnoreCase))
-                {
-                    player.playerNumber = 3;
-                }
-                else
-                {
-                    Debug.LogWarning($"{playerName}: Name doesn't contain Claire, John, or Thomas. Keeping default playerNumber = {player.playerNumber}");
-                }
+                p.playerNumber = 1;
+                p.moveSpeed = 5f;
+                p.jumpForce = 7f;
             }
-            playersInitialized = true;
+            if (p.name == "Claire")
+            {
+                p.playerNumber = 2;
+                p.moveSpeed = 4f;
+                p.jumpForce = 4f;
+            }
+            if (p.name == "John")
+            {
+                p.playerNumber = 3;
+                p.moveSpeed = 6f;
+                p.jumpForce = 8f;
+            }
         }
 
-        Debug.Log($"Start() called for {name} (Player {playerNumber})");
-        
-        // Store initial position and rotation for reset
         initialPosition = transform.position;
         initialRotation = transform.rotation;
-        
-        activePlayer = null;          // start with no active player
+
+        activePlayer = null;
     }
 
     void Update()
     {
-        // Handle player switching
         if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            Debug.Log("Switching to player 1...");
             SetActivePlayer(1);
-        }
         if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            Debug.Log("Switching to player 2...");
             SetActivePlayer(2);
-        }
         if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            Debug.Log("Switching to player 3...");
             SetActivePlayer(3);
-        }
 
-        // Handle jump input (only for active player)
         if (this == activePlayer && Input.GetKeyDown(KeyCode.Space))
-        {
             wantJump = true;
-        }
 
-        // Handle scene reset (R or Backspace) - only check once per frame
         if (players != null && players.Length > 0 && this == players[0] && (Input.GetKeyDown(KeyCode.R) || Input.GetKeyDown(KeyCode.Backspace)))
-        {
-            Debug.Log("Reset key pressed!");
             ResetAllPlayers();
-        }
     }
 
     void FixedUpdate()
@@ -115,13 +86,13 @@ public class PlayerScene2 : MonoBehaviour
         // Ground check (for all players) - accounts for cube size
         // Each player only detects ground on their specific layer and Layer_All
         int mask = GetGroundLayerMask();
-        
+
         // Get collider to determine cube size
         Collider col = GetComponent<Collider>();
         float checkDistance = groundCheckDistance;
         RaycastHit hit;
         bool hitSomething = false;
-        
+
         if (col != null)
         {
             // Calculate distance from center to bottom of cube
@@ -138,7 +109,7 @@ public class PlayerScene2 : MonoBehaviour
             hitSomething = Physics.Raycast(transform.position, Vector3.down, out hit, checkDistance, mask);
             isGrounded = hitSomething;
         }
-        
+
         // Debug ground detection for active player
         if (activePlayer == this && Time.frameCount % 30 == 0) // Log every 30 frames to avoid spam
         {
@@ -182,17 +153,17 @@ public class PlayerScene2 : MonoBehaviour
                 Debug.LogError($"{name}: Rigidbody is null!");
                 return;
             }
-            
+
             Vector3 force = moveDirection * moveSpeed * 10f; // Increase force to overcome friction
             Vector3 posBefore = transform.position;
             Vector3 velBefore = rb.linearVelocity;
-            
+
             // Try direct velocity change instead of force
             // rb.linearVelocity = new Vector3(horizontal * moveSpeed, rb.linearVelocity.y, rb.linearVelocity.z);
-            
+
             // Try AddForce with higher force
             rb.AddForce(force, ForceMode.Acceleration);
-            
+
             Debug.Log($"{name} moving: horizontal={horizontal}, force={force}, posBefore={posBefore}, velBefore={velBefore}, velAfter={rb.linearVelocity}");
         }
     }
@@ -218,16 +189,16 @@ public class PlayerScene2 : MonoBehaviour
                 Debug.LogWarning($"{name}: Invalid playerNumber {playerNumber}, defaulting to Layer_All only");
                 return LayerMask.GetMask("Layer_All");
         }
-        
+
         // Combine the player's specific layer with Layer_All
         int mask = LayerMask.GetMask(playerLayerName, "Layer_All");
-        
+
         // Debug: Log the mask value once at Start
         if (Time.frameCount < 5) // Only log in first few frames
         {
             Debug.Log($"{name} (Player {playerNumber}): Ground mask = {mask}, looking for layers: {playerLayerName} + Layer_All");
         }
-        
+
         return mask;
     }
 
@@ -254,7 +225,7 @@ public class PlayerScene2 : MonoBehaviour
         }
 
         Debug.Log($"ResetAllPlayers: Resetting {players.Length} players");
-        
+
         foreach (var p in players)
         {
             if (p != null && p.rb != null)
@@ -262,14 +233,14 @@ public class PlayerScene2 : MonoBehaviour
                 // Reset position and rotation
                 p.transform.position = p.initialPosition;
                 p.transform.rotation = p.initialRotation;
-                
+
                 // Stop all movement
                 p.rb.linearVelocity = Vector3.zero;
                 p.rb.angularVelocity = Vector3.zero;
-                
+
                 // Reset jump flag
                 p.wantJump = false;
-                
+
                 Debug.Log($"Reset {p.name} to position {p.initialPosition}");
             }
             else
@@ -277,13 +248,13 @@ public class PlayerScene2 : MonoBehaviour
                 Debug.LogWarning($"ResetAllPlayers: Player {p?.name} is null or has no Rigidbody!");
             }
         }
-        
+
         // Reset active player selection
         activePlayer = null;
-        
+
         // Reset exit completion flags
         ExitFrame.ResetCompletionFlag();
-        
+
         Debug.Log("Scene reset: All players returned to initial positions");
     }
 }

@@ -1,7 +1,7 @@
 using UnityEngine;
 
 [RequireComponent(typeof(Rigidbody))]
-public class Player : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
     public int playerNumber = 1;      // 1, 2, or 3 in the Inspector
     public float moveSpeed = 5f;      // Movement speed
@@ -13,28 +13,23 @@ public class Player : MonoBehaviour
     public Transform startPosition;
     public float startPositionYOffset = 1.0f;
 
-    private static Player activePlayer = null;
-    private static Player[] players;
-    private static bool playersInitialized = false;
+    private static PlayerController activePlayer = null;
+    private static PlayerController[] players;
 
-    public static Player GetActivePlayer() => activePlayer;
+    public static PlayerController GetActivePlayer() => activePlayer;
 
     private Rigidbody rb;
     private bool isGrounded = false;
     private bool wantJump = false;
     private Vector3 initialPosition;
     private Quaternion initialRotation;
-    private Color originalColor;
     private static bool isGameOver = false;
 
     void Awake()
     {
         rb = GetComponent<Rigidbody>();
         if (rb == null)
-        {
-            Debug.LogError($"{name}: No Rigidbody component found!");
             return;
-        }
         rb.freezeRotation = true; // Prevent tipping over
         rb.isKinematic = false; // Ensure Rigidbody responds to physics forces
     }
@@ -42,51 +37,17 @@ public class Player : MonoBehaviour
     void Start()
     {
         if (players == null)
-            players = FindObjectsByType<Player>(FindObjectsSortMode.None);
+            players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
 
+        // Assign player numbers and stats based on GameObject name
         foreach (var p in players)
-        {
-            if (p.name == "Thomas")
-            {
-                p.playerNumber = 1;
-                p.moveSpeed = 5f;
-                p.jumpForce = 7f;
-            }
-            if (p.name == "Claire")
-            {
-                p.playerNumber = 2;
-                p.moveSpeed = 4f;
-                p.jumpForce = 4f;
-            }
-            if (p.name == "John")
-            {
-                p.playerNumber = 3;
-                p.moveSpeed = 6f;
-                p.jumpForce = 8f;
-            }
-        }
+            p.AssignNumberSpeedJump();
 
-        // Always exclude Layer_None from groundMask if it exists
-        // This prevents players from detecting platforms on Layer_None as ground
-        // We need LayerNone only in the Scene 3
-        int layerNone = LayerMask.NameToLayer("Layer_None");
-        if (layerNone != -1)
-        {
-            // Remove Layer_None from groundMask by using bitwise AND with inverted bit
-            groundMask = groundMask & ~(1 << layerNone);
-            Debug.Log($"[Player] {name}: Excluded Layer_None from groundMask. Layer_None index: {layerNone}");
-        }
+        // Build per-player ground mask (excludes other players' layers, includes own)
+        BuildPerPlayerGroundMask();
 
-        // If start position is assigned, move player there (slightly above in Y)
-        if (startPosition != null)
-        {
-            Vector3 startPos = startPosition.position;
-            startPos.y += startPositionYOffset;
-            transform.position = startPos;
-            // Reset rotation to identity (upright, no rotation) when using start position
-            transform.rotation = Quaternion.identity;
-            Debug.Log($"{name} positioned at start position: {startPos} (above '{startPosition.name}')");
-        }
+        // Position player at start position if assigned
+        SetPlayerIntoStartPosition();
 
         // Store initial position and rotation for reset
         initialPosition = transform.position;
@@ -202,6 +163,77 @@ public class Player : MonoBehaviour
         activePlayer = null;
         ExitFrame.ResetCompletionFlag();
         Debug.Log("Scene reset: All players returned to initial positions");
+    }
+
+    private void AssignNumberSpeedJump()
+    {
+        if (name == "Thomas")
+        {
+            playerNumber = 1;
+            moveSpeed = 5f;
+            jumpForce = 7f;
+        }
+        else if (name == "Claire")
+        {
+            playerNumber = 2;
+            moveSpeed = 4f;
+            jumpForce = 4f;
+        }
+        else if (name == "John")
+        {
+            playerNumber = 3;
+            moveSpeed = 6f;
+            jumpForce = 8f;
+        }
+    }
+
+    private void SetPlayerIntoStartPosition()
+    {
+        // If start position is assigned, move player there (slightly above in Y)
+        if (startPosition != null)
+        {
+            Vector3 startPos = startPosition.position;
+            startPos.y += startPositionYOffset;
+            transform.position = startPos;
+            // Reset rotation to identity (upright, no rotation) when using start position
+            transform.rotation = Quaternion.identity;
+            Debug.Log($"{name} positioned at start position: {startPos} (above '{startPosition.name}')");
+        }
+    }
+
+    private void BuildPerPlayerGroundMask()
+    {
+        int mask = groundMask.value;
+
+        // Remove Layer_None
+        int layerNone = LayerMask.NameToLayer("Layer_None");
+        if (layerNone != -1)
+            mask &= ~(1 << layerNone);
+
+        // Remove all three player layers
+        int LayerClaire = LayerMask.NameToLayer("Layer_Claire");
+        int LayerThomas = LayerMask.NameToLayer("Layer_Thomas");
+        int LayerJohn = LayerMask.NameToLayer("Layer_John");
+
+        if (LayerClaire != -1) mask &= ~(1 << LayerClaire);
+        if (LayerThomas != -1) mask &= ~(1 << LayerThomas);
+        if (LayerJohn != -1) mask &= ~(1 << LayerJohn);
+
+        // Add back only this player's layer
+        string playerName = name;
+        int playerLayer = -1;
+
+        if (playerName == "Claire")
+            playerLayer = LayerClaire;
+        else if (playerName == "Thomas")
+            playerLayer = LayerThomas;
+        else if (playerName == "John")
+            playerLayer = LayerJohn;
+
+        if (playerLayer != -1)
+            mask |= (1 << playerLayer);
+
+        groundMask = mask;
     }
 
     private bool CheckGrounded()
