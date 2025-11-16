@@ -4,13 +4,13 @@ using System.Collections.Generic;
 public class ExitStage2 : MonoBehaviour
 {
     // Track which players are currently inside the trigger
-    private HashSet<PlayerScene2> playersInside = new HashSet<PlayerScene2>();
+    private HashSet<PlayerController> playersInside = new HashSet<PlayerController>();
     private const int totalPlayers = 3; // Hardcoded: Claire, John, Thomas
 
     void OnTriggerEnter(Collider other)
     {
-        // Check if the collider belongs to a PlayerScene2
-        PlayerScene2 player = other.GetComponent<PlayerScene2>();
+        // Check if the collider belongs to a PlayerController
+        PlayerController player = other.GetComponent<PlayerController>();
         if (player != null)
         {
             playersInside.Add(player);
@@ -30,8 +30,8 @@ public class ExitStage2 : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        // Check if the collider belongs to a PlayerScene2
-        PlayerScene2 player = other.GetComponent<PlayerScene2>();
+        // Check if the collider belongs to a PlayerController
+        PlayerController player = other.GetComponent<PlayerController>();
         if (player != null)
         {
             playersInside.Remove(player);

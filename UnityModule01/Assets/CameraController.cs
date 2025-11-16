@@ -8,7 +8,7 @@ public class CameraController : MonoBehaviour
     /// Offset when following a player. More distance (Z) and more space below (Y).
     /// </summary>
     public Vector3 followOffset = new Vector3(0f, 7f, -15f);
-    
+
     private MonoBehaviour lastActivePlayer = null;
     private Vector3 overviewPosition;
     private Quaternion overviewRotation;
@@ -27,32 +27,32 @@ public class CameraController : MonoBehaviour
     void CalculateOverviewPosition()
     {
         string sceneName = SceneManager.GetActiveScene().name;
-        
+
         // For Stage4, use Start and Exit GameObjects
         if (sceneName == "Stage4")
         {
             GameObject startObj = GameObject.Find("Start");
             GameObject exitObj = GameObject.Find("Exit");
-            
+
             if (startObj != null && exitObj != null)
             {
                 Vector3 startPos = startObj.transform.position;
                 Vector3 exitPos = exitObj.transform.position;
-                
+
                 // Calculate path length along X-axis
                 float pathLength = Mathf.Abs(exitPos.x - startPos.x);
-                
+
                 // Use average Y and Z of Start and Exit
                 float pathAvgY = (startPos.y + exitPos.y) / 2f;
                 float pathAvgZ = (startPos.z + exitPos.z) / 2f;
-                
+
                 // Calculate distance needed to see the whole path
                 // Since camera looks along X axis, we need to position it at the right distance
                 // to frame the path length along X as top-bottom in view
                 Camera pathCam = GetComponent<Camera>();
                 float pathFov = pathCam != null ? pathCam.fieldOfView : 60f;
-                float pathAspect = pathCam != null ? pathCam.aspect : 16f/9f;
-                
+                float pathAspect = pathCam != null ? pathCam.aspect : 16f / 9f;
+
                 // Use vertical FOV to calculate distance needed to see path length
                 float pathVertFov = pathFov;
                 float pathHalfVertFovRad = (pathVertFov * 0.5f) * Mathf.Deg2Rad;
@@ -61,20 +61,20 @@ public class CameraController : MonoBehaviour
                 float pathDistance = (pathLength * 0.5f / Mathf.Tan(pathHalfVertFovRad)) * 1.2f;
                 // Ensure minimum distance
                 pathDistance = Mathf.Max(pathDistance, 15f);
-                
+
                 // Position camera behind Start, elevated and to the side to see whole path
                 // Camera should be at a distance that frames the path vertically
                 float cameraX = startPos.x - 2f; // Slightly behind Start
                 float cameraY = pathAvgY + pathDistance * 0.3f; // Elevated but not too much
                 float cameraZ = pathAvgZ - pathDistance * 0.5f; // To the side, at calculated distance
-                
+
                 overviewPosition = new Vector3(cameraX, cameraY, cameraZ);
-                
+
                 // Camera should look at the center of the path
                 Vector3 lookAtPoint = new Vector3((startPos.x + exitPos.x) / 2f, pathAvgY, pathAvgZ);
                 Vector3 lookDirection = (lookAtPoint - overviewPosition).normalized;
                 overviewRotation = Quaternion.LookRotation(lookDirection);
-                
+
                 Debug.Log($"CameraController: Overview calculated. Camera at X: {cameraX} (behind Start), Y: {cameraY}, Z: {cameraZ}. Path X: {startPos.x} to {exitPos.x}, Length: {pathLength}, Distance: {pathDistance}");
                 return;
             }
@@ -83,20 +83,19 @@ public class CameraController : MonoBehaviour
                 Debug.LogWarning("CameraController: Start or Exit GameObject not found in Stage4! Falling back to player-based calculation.");
             }
         }
-        
+
         // Fallback: Calculate based on player positions (for other scenes or if Start/Exit not found)
-        Player[] players = FindObjectsByType<Player>(FindObjectsSortMode.None);
-        PlayerScene2[] playersScene2 = FindObjectsByType<PlayerScene2>(FindObjectsSortMode.None);
-        
+        PlayerController[] players = FindObjectsByType<PlayerController>(FindObjectsSortMode.None);
+
         float minX = float.MaxValue;
         float maxX = float.MinValue;
         float playerAvgY = 0f;
         int playerCount = 0;
-        
-        // Check Player type
+
+        // Check PlayerController type
         if (players != null && players.Length > 0)
         {
-            foreach (Player p in players)
+            foreach (PlayerController p in players)
             {
                 Vector3 pos = p.transform.position;
                 if (pos.x < minX) minX = pos.x;
@@ -105,20 +104,7 @@ public class CameraController : MonoBehaviour
                 playerCount++;
             }
         }
-        
-        // Check PlayerScene2 type
-        if (playersScene2 != null && playersScene2.Length > 0)
-        {
-            foreach (PlayerScene2 p in playersScene2)
-            {
-                Vector3 pos = p.transform.position;
-                if (pos.x < minX) minX = pos.x;
-                if (pos.x > maxX) maxX = pos.x;
-                playerAvgY += pos.y;
-                playerCount++;
-            }
-        }
-        
+
         if (playerCount == 0)
         {
             Debug.LogWarning("CameraController: No players found! Using default overview position.");
@@ -126,41 +112,37 @@ public class CameraController : MonoBehaviour
             overviewRotation = Quaternion.identity;
             return;
         }
-        
+
         // Calculate center of path along X-axis
         float playerCenterX = (minX + maxX) / 2f;
         playerAvgY /= playerCount;
-        
+
         // Calculate path length
         float playerPathLength = maxX - minX;
-        
+
         // Calculate Z distance based on path length
         Camera cam = GetComponent<Camera>();
         float fov = cam != null ? cam.fieldOfView : 60f;
         float halfFovRad = (fov * 0.5f) * Mathf.Deg2Rad;
         float zDistance = (playerPathLength * 0.5f / Mathf.Tan(halfFovRad)) * 1.2f;
         zDistance = Mathf.Max(zDistance, 20f);
-        
+
         // Position camera to see the whole path
         overviewPosition = new Vector3(playerCenterX, playerAvgY + 10f, -zDistance);
-        
+
         // Calculate rotation to look at path center
         Vector3 playerLookAtTarget = new Vector3(playerCenterX, playerAvgY, 0f);
         Vector3 playerLookDirection = (playerLookAtTarget - overviewPosition).normalized;
         overviewRotation = Quaternion.LookRotation(playerLookDirection);
-        
+
         Debug.Log($"CameraController: Overview calculated from players. Path X range: {minX} to {maxX}, Length: {playerPathLength}, Z Distance: {zDistance}");
     }
 
     void LateUpdate()
     {
-        // Try PlayerScene2 first, then fall back to Player
-        MonoBehaviour activePlayer = PlayerScene2.GetActivePlayer();
-        if (activePlayer == null)
-        {
-            activePlayer = Player.GetActivePlayer();
-        }
-        
+        // Use PlayerController active player only
+        MonoBehaviour activePlayer = PlayerController.GetActivePlayer();
+
         if (activePlayer == null)
         {
             // No active player: show overview of the whole path
@@ -190,7 +172,7 @@ public class CameraController : MonoBehaviour
             t.position.z + followOffset.z
         );
         transform.position = targetPosition;
-        
+
         // Look at the player from the camera position
         Vector3 lookDirection = (t.position - targetPosition).normalized;
         transform.rotation = Quaternion.LookRotation(lookDirection);

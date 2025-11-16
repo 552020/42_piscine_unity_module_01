@@ -8,44 +8,44 @@ public class ExitFrame : MonoBehaviour
 {
     public Vector2 size = new Vector2(1f, 1f);   // width, height (used if targetPlayer is null)
     public float padding = 1.5f;                  // padding around player size (larger = easier to fit)
-    public MonoBehaviour targetPlayer;             // Player or PlayerScene2 to match size with
+    public MonoBehaviour targetPlayer;             // PlayerController to match size with
     public float lineWidth = 0.05f;
     public Color color = Color.white;
 
     BoxCollider box;
     LineRenderer lr;
-    
+
     // Static tracking for all exits
     private static ExitFrame[] allExits;
     private static bool exitsInitialized = false;
     private bool isPlayerInside = false;
 
-    void OnEnable()  
-    { 
+    void OnEnable()
+    {
         if (!Application.isPlaying) AlignWithGround();
         if (targetPlayer != null) CalculateSizeFromPlayer();
-        Apply(); 
+        Apply();
     }
-    
+
     void OnValidate()
-    { 
+    {
         if (!Application.isPlaying) AlignWithGround();
         if (targetPlayer != null) CalculateSizeFromPlayer();
-        Apply(); 
+        Apply();
     }   // updates live in the editor
 
     void Start()
     {
         // Align bottom with ground
         AlignWithGround();
-        
+
         // Calculate size from target player if set
         if (targetPlayer != null)
         {
             CalculateSizeFromPlayer();
         }
         Apply();
-        
+
         // Initialize exits array
         if (!exitsInitialized)
         {
@@ -64,15 +64,15 @@ public class ExitFrame : MonoBehaviour
             // Try alternative names
             ground = GameObject.Find("Plane") ?? GameObject.Find("Floor");
         }
-        
+
         if (ground != null)
         {
             // Get the top surface of the ground
             Renderer groundRenderer = ground.GetComponent<Renderer>();
             Collider groundCollider = ground.GetComponent<Collider>();
-            
+
             float groundTop = 0f;
-            
+
             if (groundRenderer != null)
             {
                 // Use the top of the ground's bounds
@@ -88,7 +88,7 @@ public class ExitFrame : MonoBehaviour
                 // Fallback: use ground's Y position
                 groundTop = ground.transform.position.y;
             }
-            
+
             Vector3 pos = transform.position;
             pos.y = groundTop;
             transform.position = pos;
@@ -113,7 +113,7 @@ public class ExitFrame : MonoBehaviour
     void Apply()
     {
         if (!box) box = GetComponent<BoxCollider>();
-        if (!lr)  lr  = GetComponent<LineRenderer>();
+        if (!lr) lr = GetComponent<LineRenderer>();
 
         // trigger volume that the player must stand in
         box.isTrigger = true;
@@ -126,14 +126,14 @@ public class ExitFrame : MonoBehaviour
         lr.positionCount = 5;
         lr.startWidth = lr.endWidth = lineWidth;
         lr.loop = false;
-        
+
         // Handle material - use sharedMaterial for prefabs, material for runtime
         if (lr.sharedMaterial == null)
         {
             Material newMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             lr.sharedMaterial = newMat;
         }
-        
+
         // Set color - use material at runtime, sharedMaterial in editor
         if (Application.isPlaying)
         {
@@ -163,9 +163,8 @@ public class ExitFrame : MonoBehaviour
 
     void OnTriggerEnter(Collider other)
     {
-        // Check for both Player and PlayerScene2
-        MonoBehaviour player = other.GetComponent<Player>() as MonoBehaviour ?? 
-                               other.GetComponent<PlayerScene2>() as MonoBehaviour;
+        // Check for PlayerController
+        MonoBehaviour player = other.GetComponent<PlayerController>() as MonoBehaviour;
         if (player != null && player == targetPlayer)
         {
             isPlayerInside = true;
@@ -175,9 +174,8 @@ public class ExitFrame : MonoBehaviour
 
     void OnTriggerStay(Collider other)
     {
-        // Check for both Player and PlayerScene2
-        MonoBehaviour player = other.GetComponent<Player>() as MonoBehaviour ?? 
-                               other.GetComponent<PlayerScene2>() as MonoBehaviour;
+        // Check for PlayerController
+        MonoBehaviour player = other.GetComponent<PlayerController>() as MonoBehaviour;
         if (player != null && player == targetPlayer)
         {
             // Continuously verify player is still inside
@@ -189,9 +187,8 @@ public class ExitFrame : MonoBehaviour
 
     void OnTriggerExit(Collider other)
     {
-        // Check for both Player and PlayerScene2
-        MonoBehaviour player = other.GetComponent<Player>() as MonoBehaviour ?? 
-                               other.GetComponent<PlayerScene2>() as MonoBehaviour;
+        // Check for PlayerController
+        MonoBehaviour player = other.GetComponent<PlayerController>() as MonoBehaviour;
         if (player != null && player == targetPlayer)
         {
             isPlayerInside = false;
@@ -234,7 +231,7 @@ public class ExitFrame : MonoBehaviour
         {
             stageCompleteMessageShown = true;
             Debug.Log("STAGE COMPLETE! All characters are aligned with their exits!");
-            
+
             // Load next scene
             GameUtils.LoadNextScene();
         }

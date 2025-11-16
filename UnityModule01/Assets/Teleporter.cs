@@ -31,14 +31,14 @@ public class Teleporter : MonoBehaviour
     /// The frame faces the player, so players align horizontally (X-axis) to enter it.
     /// </summary>
     public Vector2 teleporterSize = new Vector2(2f, 3f);  // width (X-axis), height (Y-axis) - fixed size
-    
+
     /// <summary>
     /// Width/thickness of the LineRenderer lines that draw the teleporter frame outline.
     /// This controls how thick the frame border appears. Default is 0.05 (thin lines).
     /// Increase for thicker, more visible frame lines.
     /// </summary>
     public float lineWidth = 0.05f;
-    
+
     /// <summary>
     /// Depth (Z-axis) of the BoxCollider trigger volume.
     /// For side-scrolling games with horizontal movement (X-axis), players might be slightly offset in Z.
@@ -47,18 +47,18 @@ public class Teleporter : MonoBehaviour
     /// Can be set even larger (100, 1000) if needed, or decreased for more precise triggering.
     /// </summary>
     public float triggerDepth = 50f;
-    
+
     /// <summary>
     /// Color of the teleporter frame outline drawn by the LineRenderer.
     /// This is a fixed color (unlike ExitFrame which matches player colors).
     /// Can be set to a distinctive color like cyan, blue, or purple to make teleporters easily recognizable.
     /// </summary>
     public Color color = Color.cyan;
-    
+
     [Header("Teleporter Configuration")]
     public bool isEntrance = true;  // true = entrance, false = exit
     public Teleporter linkedTeleporter;  // The paired teleporter (entrance links to exit, exit links to entrance)
-    
+
     [Header("Signal Text Settings")]
     /// <summary>
     /// Text to display on the signal (child GameObject with TextMeshPro component).
@@ -66,27 +66,27 @@ public class Teleporter : MonoBehaviour
     /// Can be manually set to custom text like "TELEPORT", "↑", etc.
     /// </summary>
     public string signalText = "";  // Empty = auto-set based on isEntrance
-    
+
     /// <summary>
     /// Reference to the TextMeshPro component on a child GameObject (the signal/marker).
     /// If not assigned, will automatically find it in children on Start().
     /// </summary>
     [SerializeField] private TextMeshPro signalTextMesh;
-    
+
     [Header("Optional Settings")]
     public bool autoAlignWithGround = true;
-    
+
     // Component references
     private BoxCollider box;
     private LineRenderer lr;
-    
+
     void OnEnable()
     {
         // Setup when component is enabled (in editor or at runtime)
         // Note: Alignment handled by OnValidate() in editor, Start() at runtime
         Apply();  // Configure BoxCollider and LineRenderer
     }
-    
+
     void OnValidate()
     {
         // Updates live in the editor when values change in Inspector
@@ -97,7 +97,7 @@ public class Teleporter : MonoBehaviour
         Apply();  // Update BoxCollider and LineRenderer when settings change
         ConfigureSignalText();  // Update signal text when settings change
     }
-    
+
     void Start()
     {
         // Initialization when game starts (at runtime)
@@ -107,14 +107,14 @@ public class Teleporter : MonoBehaviour
         }
         Apply();  // Ensure BoxCollider and LineRenderer are configured correctly
         ConfigureSignalText();  // Set up the signal text
-        
+
         // Optional: Validate that entrance has a linked exit
         if (isEntrance && linkedTeleporter == null)
         {
             Debug.LogWarning($"Teleporter '{gameObject.name}' is set as Entrance but has no linked Teleporter assigned!");
         }
     }
-    
+
     void AlignWithGround()
     {
         // COMMENTED OUT - positioning logic disabled
@@ -196,7 +196,7 @@ public class Teleporter : MonoBehaviour
         }
         */
     }
-    
+
     /// <summary>
     /// Custom method (not a Unity method) that configures the BoxCollider and LineRenderer
     /// based on the teleporter settings (size, color, lineWidth).
@@ -207,7 +207,7 @@ public class Teleporter : MonoBehaviour
     {
         // Get component references
         if (!box) box = GetComponent<BoxCollider>();
-        if (!lr)  lr  = GetComponent<LineRenderer>();
+        if (!lr) lr = GetComponent<LineRenderer>();
 
         // Check if components exist (may be null in prefab mode or before components are added)
         if (box == null || lr == null)
@@ -226,14 +226,14 @@ public class Teleporter : MonoBehaviour
         lr.positionCount = 5;
         lr.startWidth = lr.endWidth = lineWidth;
         lr.loop = false;
-        
+
         // Handle material - use sharedMaterial for prefabs, material for runtime
         if (lr.sharedMaterial == null)
         {
             Material newMat = new Material(Shader.Find("Universal Render Pipeline/Unlit"));
             lr.sharedMaterial = newMat;
         }
-        
+
         // Set color - use material at runtime, sharedMaterial in editor/prefab mode
         // Always use sharedMaterial in editor to avoid "not allowed to access material on prefab" error
         if (Application.isPlaying)
@@ -266,7 +266,7 @@ public class Teleporter : MonoBehaviour
             new(-hx, 0, 0)                     // back to bottom-left (close the loop)
         });
     }
-    
+
     /// <summary>
     /// Configures the signal text on a child GameObject with TextMeshPro component.
     /// Finds the TextMeshPro component if not assigned, and sets the text based on signalText or isEntrance.
@@ -278,64 +278,64 @@ public class Teleporter : MonoBehaviour
         {
             signalTextMesh = GetComponentInChildren<TextMeshPro>();
         }
-        
+
         // If still not found, skip (signal is optional)
         if (signalTextMesh == null)
         {
             return;
         }
-        
+
         // Determine what text to display
         string textToDisplay = signalText;
-        
+
         // If signalText is empty, auto-set based on isEntrance
         if (string.IsNullOrEmpty(textToDisplay))
         {
             textToDisplay = isEntrance ? "ENTRY" : "EXIT";
         }
-        
+
         // Set the text
         signalTextMesh.text = textToDisplay;
     }
-    
+
     void OnTriggerEnter(Collider other)
     {
         Debug.Log($"[Teleporter] OnTriggerEnter called on '{gameObject.name}' - Object: '{other.gameObject.name}'");
-        
+
         // Only process if this is an entrance teleporter
         if (!isEntrance)
         {
             Debug.Log($"[Teleporter] '{gameObject.name}' is not an entrance, ignoring trigger.");
             return;  // Exit teleporters don't trigger teleportation
         }
-        
-        Debug.Log($"[Teleporter] '{gameObject.name}' is an entrance, checking for Player component...");
-        
-        // Check for Player component only
-        Player player = other.GetComponent<Player>();
-        
+
+        Debug.Log($"[Teleporter] '{gameObject.name}' is an entrance, checking for PlayerController component...");
+
+        // Check for PlayerController component only
+        PlayerController player = other.GetComponent<PlayerController>();
+
         // If no player component found, ignore
         if (player == null)
         {
-            Debug.Log($"[Teleporter] '{gameObject.name}' - '{other.gameObject.name}' does not have Player component, ignoring.");
+            Debug.Log($"[Teleporter] '{gameObject.name}' - '{other.gameObject.name}' does not have PlayerController component, ignoring.");
             return;
         }
-        
+
         Debug.Log($"[Teleporter] '{gameObject.name}' - Player '{player.name}' detected!");
-        
+
         // Check if we have a linked exit teleporter
         if (linkedTeleporter == null)
         {
             Debug.LogWarning($"[Teleporter] '{gameObject.name}' (Entrance) has no linked Teleporter assigned! Cannot teleport.");
             return;
         }
-        
+
         Debug.Log($"[Teleporter] '{gameObject.name}' - Linked teleporter found: '{linkedTeleporter.gameObject.name}'");
-        
+
         // Teleport the player
         TeleportPlayer(player.gameObject);
     }
-    
+
     /// <summary>
     /// Teleports a player GameObject to the linked exit teleporter's position.
     /// Handles both Rigidbody and Transform-based movement.
@@ -346,13 +346,13 @@ public class Teleporter : MonoBehaviour
         {
             return;
         }
-        
+
         // Get the exit teleporter's position
         Vector3 exitPosition = linkedTeleporter.transform.position;
-        
+
         // Check if player has Rigidbody (for physics-based movement)
         Rigidbody rb = player.GetComponent<Rigidbody>();
-        
+
         if (rb != null)
         {
             // Use Rigidbody position for physics objects
@@ -365,7 +365,7 @@ public class Teleporter : MonoBehaviour
             // Use Transform position for non-physics objects
             player.transform.position = exitPosition;
         }
-        
+
         Debug.Log($"{player.name} teleported from '{gameObject.name}' to '{linkedTeleporter.gameObject.name}'");
     }
 }

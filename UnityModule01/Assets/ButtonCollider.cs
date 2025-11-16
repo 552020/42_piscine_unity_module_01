@@ -6,11 +6,11 @@ public class ButtonCollider : MonoBehaviour
 {
     // Button state: colored or not colored
     private bool isColored = false;
-    
+
     // Reference to the Trigger GameObject (the top part that changes color)
     private GameObject triggerObject;
     private MeshRenderer triggerRenderer;
-    
+
     // ============================================================================
     // STEP 2: Base Cylinder Reference
     // ============================================================================
@@ -20,13 +20,13 @@ public class ButtonCollider : MonoBehaviour
     // ============================================================================
     private Transform baseTransform;
     private Renderer baseRenderer;
-    
+
     // Original color (white)
     private Color originalColor = Color.white;
-    
+
     // Coroutine reference for reset timer
     private Coroutine resetCoroutine;
-    
+
     // ============================================================================
     // STEP 9: Store Original Trigger Position
     // ============================================================================
@@ -35,7 +35,7 @@ public class ButtonCollider : MonoBehaviour
     // before any sinking occurs, so we always have the initial position.
     // ============================================================================
     private float originalTriggerY = 0f;
-    
+
     // ============================================================================
     // STEP 1: Player Tracking
     // ============================================================================
@@ -43,8 +43,8 @@ public class ButtonCollider : MonoBehaviour
     // This is more reliable than a counter because it tracks actual Player objects,
     // preventing sync issues when the button sinks and ButtonCollider moves.
     // ============================================================================
-    private HashSet<Player> playersOnButton = new HashSet<Player>();
-    
+    private HashSet<PlayerController> playersOnButton = new HashSet<PlayerController>();
+
     // ============================================================================
     // STEP 4: Sinking State Variables
     // ============================================================================
@@ -68,19 +68,19 @@ public class ButtonCollider : MonoBehaviour
     private Coroutine riseCoroutine = null;   // Reference to stop rising animation if needed
     private float lastSinkCompleteTime = -1f; // Track when sinking last completed (for grace period)
     private const float SINK_GRACE_PERIOD = 0.2f; // Ignore OnTriggerExit for 0.2s after sinking completes
-    
+
     /// <summary>
     /// Speed at which the Trigger cylinder sinks/rises (units per second).
     /// Higher values = faster animation. Default is 2 units per second.
     /// </summary>
     [SerializeField] private float sinkSpeed = 2f;
-    
+
     /// <summary>
     /// Reference to the Doors system. Assign in Inspector.
     /// When button sinks, this will be used to open the matching door.
     /// </summary>
     [SerializeField] private Doors doors;
-    
+
     /// <summary>
     /// Reference to the ColPlatform. Assign in Inspector.
     /// When button sinks, this will be used to change the platform's layer and color.
@@ -102,13 +102,13 @@ public class ButtonCollider : MonoBehaviour
             {
                 triggerObject = triggerTransform.gameObject;
                 triggerRenderer = triggerObject.GetComponent<MeshRenderer>();
-                
+
                 // Store the original color
                 if (triggerRenderer != null && triggerRenderer.material != null)
                 {
                     originalColor = triggerRenderer.material.color;
                 }
-                
+
                 // STEP 9: Store the original Y position of the Trigger
                 originalTriggerY = triggerTransform.position.y;
                 Debug.Log($"[ButtonCollider] STEP 9: Stored original Trigger Y position: {originalTriggerY}");
@@ -117,7 +117,7 @@ public class ButtonCollider : MonoBehaviour
             {
                 Debug.LogError($"ButtonCollider: Could not find 'Trigger' GameObject under '{buttonTransform.name}'");
             }
-            
+
             // STEP 2: Find Base GameObject (sibling of Trigger, child of Button)
             Transform baseTransformFound = buttonTransform.Find("Base");
             if (baseTransformFound != null)
@@ -140,21 +140,21 @@ public class ButtonCollider : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         Debug.Log($"[ButtonCollider] OnTriggerEnter triggered! Triggered by: {other.gameObject.name}");
-        
+
         // Check if trigger is with a Player
-        Player player = other.gameObject.GetComponent<Player>();
+        PlayerController player = other.gameObject.GetComponent<PlayerController>();
         if (player == null)
         {
             Debug.Log($"[ButtonCollider] Not a Player component. Ignoring trigger with {other.gameObject.name}");
             return; // Not a player, ignore
         }
-        
+
         Debug.Log($"[ButtonCollider] Player detected! Name: {player.name}, PlayerNumber: {player.playerNumber}, isColored: {isColored}");
-        
+
         // STEP 1: Add player to set (HashSet prevents duplicates)
         playersOnButton.Add(player);
         Debug.Log($"[ButtonCollider] Players on button: {playersOnButton.Count} (added {player.name})");
-        
+
         // Cancel any pending reset if player lands again
         if (resetCoroutine != null)
         {
@@ -162,7 +162,7 @@ public class ButtonCollider : MonoBehaviour
             StopCoroutine(resetCoroutine);
             resetCoroutine = null;
         }
-        
+
         // ============================================================================
         // STEP 7: Handle Sinking When Button is Already Colored
         // ============================================================================
@@ -172,7 +172,7 @@ public class ButtonCollider : MonoBehaviour
         if (isColored)
         {
             Debug.Log("[ButtonCollider] Button already colored. Checking if sinking should start...");
-            
+
             // Stop any rising animation or pending rise if player joins
             // Check both isRising flag and riseCoroutine (in case it's in delay phase)
             if (riseCoroutine != null)
@@ -182,7 +182,7 @@ public class ButtonCollider : MonoBehaviour
                 riseCoroutine = null;
                 isRising = false;
             }
-            
+
             // Start sinking if this is the first player on the button and not already sinking
             if (playersOnButton.Count == 1 && !isSinking)
             {
@@ -197,27 +197,27 @@ public class ButtonCollider : MonoBehaviour
             {
                 Debug.Log("[ButtonCollider] STEP 7: Already sinking, no action needed.");
             }
-            
+
             return; // Don't color the button again
         }
-        
+
         // Check if player is landing from above
         // For trigger, check if player's position is above the button
         float playerY = player.transform.position.y;
         float buttonY = transform.position.y;
         float heightDifference = playerY - buttonY;
-        
+
         Debug.Log($"[ButtonCollider] Player Y: {playerY}, Button Y: {buttonY}, Height difference: {heightDifference}");
-        
+
         // Player should be above the button (at least slightly)
         if (heightDifference < 0.1f)
         {
             Debug.Log($"[ButtonCollider] Player not above button (height diff: {heightDifference} < 0.1). Ignoring.");
             return; // Not landing from above
         }
-        
+
         Debug.Log($"[ButtonCollider] Player landing from above confirmed! Proceeding to color button.");
-        
+
         // ============================================================================
         // COLOR READING APPROACH: Read color directly from player's material
         // ============================================================================
@@ -228,11 +228,11 @@ public class ButtonCollider : MonoBehaviour
         // 3. It's more flexible if player colors change in the future
         // 4. It automatically handles any color variations or custom colors
         // ============================================================================
-        
+
         // Get the player's MeshRenderer to read their material color
         MeshRenderer playerRenderer = player.GetComponent<MeshRenderer>();
         Color playerColor = Color.white; // Default fallback color
-        
+
         if (playerRenderer != null && playerRenderer.material != null)
         {
             // Read the color directly from the player's material
@@ -244,7 +244,7 @@ public class ButtonCollider : MonoBehaviour
         {
             Debug.LogWarning($"[ButtonCollider] Player '{player.name}' has no MeshRenderer or material! Using default white color.");
         }
-        
+
         // Change Trigger's material color to match the player's color
         if (triggerRenderer != null)
         {
@@ -256,28 +256,28 @@ public class ButtonCollider : MonoBehaviour
         {
             Debug.LogError("[ButtonCollider] triggerRenderer is null! Cannot change color.");
         }
-        
+
         // Set state to colored
         isColored = true;
         Debug.Log("[ButtonCollider] Button state set to colored = true");
     }
-    
+
     void OnTriggerExit(Collider other)
     {
         Debug.LogError($"[ButtonCollider] ===== OnTriggerExit FIRED (ERROR LOG TO ENSURE VISIBILITY) ===== Exited by: {other.gameObject.name}");
         Debug.Log($"[ButtonCollider] ===== OnTriggerExit FIRED ===== Exited by: {other.gameObject.name}");
         Debug.Log($"[ButtonCollider] OnTriggerExit: Current state - Players on button: {playersOnButton.Count}, isColored: {isColored}, isSinking: {isSinking}, isRising: {isRising}");
-        
+
         // Check if trigger exit is with a Player
-        Player player = other.gameObject.GetComponent<Player>();
+        PlayerController player = other.gameObject.GetComponent<PlayerController>();
         if (player == null)
         {
             Debug.Log($"[ButtonCollider] Not a Player component. Ignoring trigger exit with {other.gameObject.name}");
             return; // Not a player, ignore
         }
-        
+
         Debug.Log($"[ButtonCollider] Player exited! Name: {player.name}, isColored: {isColored}, playersOnButton before removal: {playersOnButton.Count}");
-        
+
         // CRITICAL FIX: If button is sinking OR just finished sinking, the OnTriggerExit is likely due to the button moving,
         // not the player actually leaving. Don't remove the player in this case.
         bool withinGracePeriod = (Time.time - lastSinkCompleteTime) < SINK_GRACE_PERIOD;
@@ -286,7 +286,7 @@ public class ButtonCollider : MonoBehaviour
             Debug.Log($"[ButtonCollider] Button is sinking or within grace period - ignoring OnTriggerExit for {player.name} (isSinking: {isSinking}, withinGracePeriod: {withinGracePeriod}, timeSinceSinkComplete: {Time.time - lastSinkCompleteTime})");
             return; // Don't process the exit - player is still on the button
         }
-        
+
         // STEP 1: Remove player from set
         bool removed = playersOnButton.Remove(player);
         if (!removed)
@@ -294,7 +294,7 @@ public class ButtonCollider : MonoBehaviour
             Debug.LogWarning($"[ButtonCollider] WARNING: Tried to remove {player.name} but they weren't in the set! Counter may be out of sync.");
         }
         Debug.Log($"[ButtonCollider] Players on button: {playersOnButton.Count} (after removal)");
-        
+
         // ============================================================================
         // STEP 8: Handle Rising When All Players Leave
         // ============================================================================
@@ -302,11 +302,11 @@ public class ButtonCollider : MonoBehaviour
         // start rising animation. Stop any sinking animation first.
         // ============================================================================
         Debug.Log($"[ButtonCollider] STEP 8: Checking if should rise. playersOnButton.Count: {playersOnButton.Count}, isColored: {isColored}, isSinking: {isSinking}, isRising: {isRising}");
-        
+
         if (playersOnButton.Count == 0 && isColored)
         {
             Debug.Log($"[ButtonCollider] ===== STEP 8: STARTING RISE ===== Players on button: {playersOnButton.Count}, isColored: {isColored}, isSinking: {isSinking}, isRising: {isRising}");
-            
+
             // Stop any sinking animation if player leaves while sinking
             if (isSinking && sinkCoroutine != null)
             {
@@ -315,7 +315,7 @@ public class ButtonCollider : MonoBehaviour
                 sinkCoroutine = null;
                 isSinking = false;
             }
-            
+
             // Start rising animation if not already rising
             if (!isRising)
             {
@@ -339,13 +339,13 @@ public class ButtonCollider : MonoBehaviour
         {
             Debug.Log("[ButtonCollider] STEP 8: Button not colored, no rising needed.");
         }
-        
+
         // Only reset color if button is colored
         if (!isColored)
         {
             return;
         }
-        
+
         // Start 2-second timer to reset button color (this happens regardless of rising)
         if (resetCoroutine != null)
         {
@@ -354,11 +354,11 @@ public class ButtonCollider : MonoBehaviour
         Debug.Log("[ButtonCollider] Starting 2-second reset timer");
         resetCoroutine = StartCoroutine(ResetButtonAfterDelay(2f));
     }
-    
+
     private IEnumerator ResetButtonAfterDelay(float delay)
     {
         yield return new WaitForSeconds(delay);
-        
+
         // Reset button color to original
         if (triggerRenderer != null)
         {
@@ -366,10 +366,10 @@ public class ButtonCollider : MonoBehaviour
             mat.color = originalColor;
             Debug.Log("Button reset to original color");
         }
-        
+
         // Reset state
         isColored = false;
-        
+
         // Clear playersOnButton when button resets (only if no players are actually on it)
         // This ensures clean state. If players are still on, they'll re-trigger OnTriggerEnter
         if (playersOnButton.Count == 0)
@@ -381,10 +381,10 @@ public class ButtonCollider : MonoBehaviour
         {
             Debug.LogWarning($"[ButtonCollider] ResetButtonAfterDelay: playersOnButton still has {playersOnButton.Count} player(s)! Not clearing.");
         }
-        
+
         resetCoroutine = null;
     }
-    
+
     // ============================================================================
     // STEP 3: Calculate Target Positions
     // ============================================================================
@@ -392,7 +392,7 @@ public class ButtonCollider : MonoBehaviour
     // We use bounds.max.y to get the highest Y value of the rendered mesh.
     // This is what we care about for the visual sinking effect.
     // ============================================================================
-    
+
     /// <summary>
     /// Gets the top Y position of a GameObject using its mesh renderer bounds.
     /// Returns the highest Y value of the mesh (bounds.max.y).
@@ -406,12 +406,12 @@ public class ButtonCollider : MonoBehaviour
             Debug.LogError($"[ButtonCollider] STEP 3: {objectName} has no Renderer component! Cannot get bounds.");
             return 0f;
         }
-        
+
         float topY = renderer.bounds.max.y;
         Debug.Log($"[ButtonCollider] STEP 3: {objectName} top Y = {topY} (from bounds.max.y)");
         return topY;
     }
-    
+
     /// <summary>
     /// Gets the top Y position of the Base cylinder.
     /// </summary>
@@ -419,7 +419,7 @@ public class ButtonCollider : MonoBehaviour
     {
         return GetTopY(baseRenderer, "Base");
     }
-    
+
     /// <summary>
     /// Gets the top Y position of the Trigger cylinder.
     /// </summary>
@@ -427,14 +427,14 @@ public class ButtonCollider : MonoBehaviour
     {
         return GetTopY(triggerRenderer, "Trigger");
     }
-    
+
     // ============================================================================
     // STEP 5 & 6: Unified Trigger Movement
     // ============================================================================
     // Unified function to animate the Trigger cylinder to any target Y position.
     // Both sinking and rising use the same animation logic, just different targets.
     // ============================================================================
-    
+
     /// <summary>
     /// Unified coroutine that smoothly moves the Trigger cylinder to a target Y position.
     /// Used for both sinking (to Base top) and rising (to original position).
@@ -445,28 +445,28 @@ public class ButtonCollider : MonoBehaviour
     {
         Debug.LogError($"[ButtonCollider] ===== MoveTrigger CALLED (ERROR LOG) ===== Animation: {animationName}, Target Y: {targetY}");
         Debug.Log($"[ButtonCollider] ===== MoveTrigger CALLED ===== Animation: {animationName}, Target Y: {targetY}");
-        
+
         if (triggerObject == null)
         {
             Debug.LogError($"[ButtonCollider] MoveTrigger: triggerObject is null! Cannot {animationName}.");
             yield break;
         }
-        
+
         Transform triggerTransform = triggerObject.transform;
         float startY = triggerTransform.position.y;
-        
+
         Debug.Log($"[ButtonCollider] MoveTrigger: Starting {animationName}. Start Y: {startY}, Target Y: {targetY}");
-        
+
         // Animate using lerp
         float elapsedTime = 0f;
         float distance = Mathf.Abs(targetY - startY);
         float duration = distance / sinkSpeed; // Time needed based on speed
-        
+
         while (elapsedTime < duration)
         {
             elapsedTime += Time.deltaTime;
             float t = Mathf.Clamp01(elapsedTime / duration);
-            
+
             // Smooth lerp from start to target
             float newY = Mathf.Lerp(startY, targetY, t);
             triggerTransform.position = new Vector3(
@@ -474,20 +474,20 @@ public class ButtonCollider : MonoBehaviour
                 newY,
                 triggerTransform.position.z
             );
-            
+
             yield return null; // Wait one frame
         }
-        
+
         // Ensure we end exactly at target position
         triggerTransform.position = new Vector3(
             triggerTransform.position.x,
             targetY,
             triggerTransform.position.z
         );
-        
+
         Debug.Log($"[ButtonCollider] MoveTrigger: {animationName} complete! Trigger at Y: {targetY}");
     }
-    
+
     /// <summary>
     /// Coroutine wrapper that sinks the Trigger cylinder down until its top
     /// aligns with the Base cylinder's top.
@@ -500,7 +500,7 @@ public class ButtonCollider : MonoBehaviour
             isSinking = false;
             yield break;
         }
-        
+
         // Calculate target Y position
         // We want Trigger's top to align with Base's top
         float currentTriggerTopY = GetTriggerTopY();
@@ -508,20 +508,20 @@ public class ButtonCollider : MonoBehaviour
         float topDifference = currentTriggerTopY - baseTopY;
         float startY = triggerObject.transform.position.y;
         float targetY = startY - topDifference;
-        
+
         isSinking = true;
         yield return StartCoroutine(MoveTrigger(targetY, "sink"));
-        
+
         // Log state just before exiting SinkTrigger
         Debug.Log($"[ButtonCollider] SinkTrigger: About to exit. Players on button: {playersOnButton.Count}, isSinking: {isSinking}, isRising: {isRising}");
-        
+
         isSinking = false;
         lastSinkCompleteTime = Time.time; // Mark when sinking completed (for grace period)
         sinkCoroutine = null;
-        
+
         // Log state just after exiting SinkTrigger
         Debug.Log($"[ButtonCollider] SinkTrigger: Exited. Players on button: {playersOnButton.Count}, isSinking: {isSinking}, isRising: {isRising}, grace period started");
-        
+
         // ============================================================================
         // Trigger actions when button sinking completes (doors, platform, etc.)
         // ============================================================================
@@ -530,24 +530,24 @@ public class ButtonCollider : MonoBehaviour
             Debug.LogWarning("[ButtonCollider] No players on button! Cannot determine which actions to trigger.");
             yield break;
         }
-        
+
         // Get the first player on the button (there should be at least one when sinking completes)
-        Player player = null;
-        foreach (Player p in playersOnButton)
+        PlayerController player = null;
+        foreach (PlayerController p in playersOnButton)
         {
             player = p;
             break; // Get first player
         }
-        
+
         if (player == null)
         {
             Debug.LogWarning("[ButtonCollider] Could not get player from playersOnButton!");
             yield break;
         }
-        
+
         string playerName = player.name;
         Debug.Log($"[ButtonCollider] Button sinking completed for player: {playerName}. Triggering actions...");
-        
+
         // Open the matching door if reference exists
         if (doors != null)
         {
@@ -558,7 +558,7 @@ public class ButtonCollider : MonoBehaviour
         {
             Debug.LogWarning("[ButtonCollider] Doors reference is null! Cannot open door. Assign Doors in Inspector.");
         }
-        
+
         // Change platform layer and color if reference exists
         if (platform != null)
         {
@@ -570,14 +570,14 @@ public class ButtonCollider : MonoBehaviour
             Debug.LogWarning("[ButtonCollider] Platform reference is null! Cannot change platform layer. Assign ColPlatform in Inspector.");
         }
     }
-    
+
     /// <summary>
     /// Coroutine wrapper that rises the Trigger cylinder back up to its original position.
     /// </summary>
     private IEnumerator RiseTrigger()
     {
         Debug.Log($"[ButtonCollider] ===== RiseTrigger STARTED ===== Players on button: {playersOnButton.Count}, isColored: {isColored}, isSinking: {isSinking}, isRising: {isRising}");
-        
+
         isRising = true;
         yield return StartCoroutine(MoveTrigger(originalTriggerY, "rise"));
         isRising = false;

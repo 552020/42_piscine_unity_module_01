@@ -9,7 +9,7 @@ using System.Collections.Generic;
 public class ExitStage4 : MonoBehaviour
 {
     // Track which players are currently inside the trigger
-    private HashSet<Player> playersInside = new HashSet<Player>();
+    private HashSet<PlayerController> playersInside = new HashSet<PlayerController>();
     private const int totalPlayers = 3; // Hardcoded: Claire, John, Thomas
 
     void Start()
@@ -34,17 +34,17 @@ public class ExitStage4 : MonoBehaviour
     void OnTriggerEnter(Collider other)
     {
         Debug.Log($"[ExitStage4] OnTriggerEnter called - Object: '{other.gameObject.name}'");
-        
+
         // Check if the collider belongs to a Player
-        Player player = other.GetComponent<Player>();
+        PlayerController player = other.GetComponent<PlayerController>();
         if (player != null)
         {
             playersInside.Add(player);
             Debug.Log($"[ExitStage4] '{player.name}' entered the exit platform. Players inside: {playersInside.Count}/{totalPlayers}");
-            
+
             // Log all players currently inside
             string playerNames = "";
-            foreach (Player p in playersInside)
+            foreach (PlayerController p in playersInside)
             {
                 playerNames += (playerNames == "" ? "" : ", ") + p.name;
             }
@@ -70,9 +70,9 @@ public class ExitStage4 : MonoBehaviour
     void OnTriggerExit(Collider other)
     {
         Debug.Log($"[ExitStage4] OnTriggerExit called - Object: '{other.gameObject.name}'");
-        
+
         // Check if the collider belongs to a Player
-        Player player = other.GetComponent<Player>();
+        PlayerController player = other.GetComponent<PlayerController>();
         if (player != null)
         {
             playersInside.Remove(player);
