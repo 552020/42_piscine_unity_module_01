@@ -256,19 +256,12 @@ public class PlayerController : MonoBehaviour
 
     private bool CheckGrounded()
     {
-        int mask = groundMask.value;
+        		int mask = groundMask.value;
         Collider col = GetComponent<Collider>();
-        float checkDistance = groundCheckDistance;
-        if (col != null)
-        {
-            float bottomOffset = col.bounds.extents.y;
-            Vector3 rayOrigin = transform.position - Vector3.up * (bottomOffset - 0.1f);
-            checkDistance = groundCheckDistance + 0.1f;
-            return Physics.Raycast(rayOrigin, Vector3.down, checkDistance, mask);
-        }
-        else
-        {
-            return Physics.Raycast(transform.position, Vector3.down, checkDistance, mask);
-        }
+        float bottomOffset = col.bounds.extents.y;
+        Vector3 rayOrigin = transform.position;
+        rayOrigin.y -= bottomOffset;    // move down by the bottom offset
+        rayOrigin.y += 0.1f;           // lift slightly above ground
+        return Physics.Raycast(rayOrigin, Vector3.down, groundCheckDistance, mask);
     }
 }

@@ -5,21 +5,19 @@ public static class GameUtils
 {
     public static void LoadNextScene()
     {
-        int currentIndex = SceneManager.GetActiveScene().buildIndex;
-        string currentSceneName = SceneManager.GetActiveScene().name;
-        int nextIndex = (currentIndex + 1) % SceneManager.sceneCountInBuildSettings;
+        // Get the index of the currently active scene
+        int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
         
-        // If nextIndex is 0, we're wrapping to the first scene (last scene completed)
-        if (nextIndex == 0)
-        {
-            Debug.Log($"[GameUtils] Last scene completed! Wrapping to first scene (index 0).");
-        }
-        else
-        {
-            Debug.Log($"[GameUtils] Loading next scene: index {nextIndex} (from current scene '{currentSceneName}' index {currentIndex})");
-        }
+        // Calculate the next scene index (increment by 1)
+        int nextSceneIndex = currentSceneIndex + 1;
         
-        SceneManager.LoadScene(nextIndex);
+        // Get the total number of scenes in the build settings
+        int totalScenesInBuild = SceneManager.sceneCountInBuildSettings;
+        
+        // Use modulo to wrap around: if we exceed the last scene, loop back to scene 0
+        int wrappedSceneIndex = nextSceneIndex % totalScenesInBuild;
+        
+        // Load the calculated scene
+        SceneManager.LoadScene(wrappedSceneIndex);
     }
 }
-
